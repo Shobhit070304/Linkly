@@ -4,9 +4,6 @@ const Url = require("../models/url-model");
 const User = require("../models/user-model");
 
 module.exports.shortenUrl = async (req, res) => {
-    console.log("Hello from shortenUrl");
-    console.log(req.body);
-    console.log(req.user);
     //Redis Client Connection
     const redisClient = getRedisClient();
     if (!redisClient) {
