@@ -14,7 +14,7 @@ function Dashboard() {
         setLoading(true);
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/url/me`, {
+            const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/url/me`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -33,7 +33,7 @@ function Dashboard() {
     const handleDelete = async (shortUrl) => {
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/url/delete`, {
+            const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/url/delete`, {
                 shortUrl: shortUrl
             }, {
                 headers: {
