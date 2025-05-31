@@ -89,9 +89,9 @@ function Dashboard() {
                                     </a>
                                 </div>
                                 <div className="col-span-2 text-gray-400 truncate flex gap-2 items-center justify-start gap-2 cursor-pointer">
-                                    <CopyIcon onClick={() => navigator.clipboard.writeText(`${import.meta.env.VITE_BASE_URL}/${url.shortUrl}`)} className="h-4 w-4 hover:text-indigo-400 " />
-                                    <a href={`${import.meta.env.VITE_BASE_URL}/${url.shortUrl}`} target="_blank" rel="noopener noreferrer" className="hover:underline tracking-tighter hover:text-indigo-400 text-smtransition-colors">
-                                        {import.meta.env.VITE_BASE_URL + "/" + url.shortUrl}
+                                    <CopyIcon onClick={() => navigator.clipboard.writeText(`${import.meta.env.VITE_BACKEND_URL}/${url.shortUrl}`)} className="h-4 w-4 hover:text-indigo-400 " />
+                                    <a href={`${import.meta.env.VITE_BACKEND_URL}/${url.shortUrl}`} target="_blank" rel="noopener noreferrer" className="hover:underline tracking-tighter hover:text-indigo-400 text-smtransition-colors">
+                                        {import.meta.env.VITE_BACKEND_URL + "/" + url.shortUrl}
                                     </a>
                                 </div>
                                 <div className="col-span-1 text-center text-white">

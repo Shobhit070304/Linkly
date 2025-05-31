@@ -34,7 +34,7 @@ function UrlShortner() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/api/url/shorten`,
+        `${import.meta.env.VITE_BASE_URL}/url/shorten`,
         {
           longUrl: longUrl,
           customShort: customShort,
@@ -72,7 +72,7 @@ function UrlShortner() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/api/url/original`,
+        `${import.meta.env.VITE_BASE_URL}/url/original`,
         { shortUrl: shortUrl },
         {
           headers: {
