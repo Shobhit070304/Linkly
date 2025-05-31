@@ -29,7 +29,7 @@ const UserContext = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(userInfo));
     localStorage.setItem("token", userData.accessToken);
     setUser(userInfo);
-    const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/user/login`, {
+    const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/login`, {
       name: userData.displayName,
       email: userData.email,
     },
@@ -39,7 +39,6 @@ const UserContext = ({ children }) => {
         },
       }
     );
-    console.log(response.data.user);
   };
 
   const logout = () => {
