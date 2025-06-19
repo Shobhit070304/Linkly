@@ -22,6 +22,7 @@ const UserContext = ({ children }) => {
   }, []);
 
   const login = async (userData) => {
+    console.log("User data received:", userData);
     const userInfo = {
       name: userData.displayName,
       email: userData.email,

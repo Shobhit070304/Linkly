@@ -23,16 +23,12 @@ app.use(
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-
 app.get("/", (req, res) => {
   res.send("Hello from Backend");
 });
 
 app.use("/api/url", urlRoutes);
 app.use("/api/user", userRoutes);
-
-
-
 
 // Redirect to Long URL
 app.get("/:shortUrl", async (req, res) => {
@@ -60,7 +56,8 @@ app.get("/:shortUrl", async (req, res) => {
       const now = new Date();
 
       let isExpired = urlData.expiresAt && now > urlData.expiresAt;
-      let isClickLimitReached = urlData.maxClicks && urlData.clicks >= urlData.maxClicks;
+      let isClickLimitReached =
+        urlData.maxClicks && urlData.clicks >= urlData.maxClicks;
 
       // If expired or click limit reached, delete from Redis and DB
       if (isExpired) {
@@ -71,7 +68,9 @@ app.get("/:shortUrl", async (req, res) => {
       if (isClickLimitReached) {
         await redisClient.hdel("urls", shortUrl);
         await Url.deleteOne({ shortUrl });
-        return res.status(410).json({ status: false, error: "Click limit reached" });
+        return res
+          .status(410)
+          .json({ status: false, error: "Click limit reached" });
       }
 
       await Url.updateOne({ shortUrl }, { $inc: { clicks: 1 } });
@@ -102,7 +101,9 @@ app.get("/:shortUrl", async (req, res) => {
       await redisClient.hdel("urls", shortUrl);
       await Url.deleteOne({ shortUrl });
       // It should be go to the client side and show a message that the click limit has been reached
-      return res.status(410).json({ status: false, error: "Click limit reached" });
+      return res
+        .status(410)
+        .json({ status: false, error: "Click limit reached" });
     }
 
     // Cache the result in Redis
@@ -119,6 +120,5 @@ app.get("/:shortUrl", async (req, res) => {
       .json({ status: false, error: "Internal Server Error" });
   }
 });
-
 
 module.exports = app;

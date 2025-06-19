@@ -22,19 +22,19 @@ const Auth = () => {
   };
 
   const loginWithGithub = async () => {
-    toast.error(
-      "GitHub login is currently disabled. Please use Google to sign in."
-    );
-    // try {
-    //   console.log("Attempting GitHub login...");
-    //   const userData = await signInWithPopup(auth, githubProvider);
-    //   console.log("GitHub User Data:", userData);
-    //   login(userData.user);
-    //   navigate("/home");
-    // } catch (error) {
-    //   console.log("GitHub login error:", error);
-    //   toast.error("GitHub login failed. Please try again.");
-    // }
+    // toast.error(
+    //   "GitHub login is currently disabled. Please use Google to sign in."
+    // );
+    try {
+      console.log("Attempting GitHub login...");
+      const userData = await signInWithPopup(auth, githubProvider);
+      console.log("GitHub login successful:", userData);
+      login(userData.user);
+      navigate("/home");
+    } catch (error) {
+      console.error("GitHub login failed:", error);
+      toast.error("GitHub login failed. Please try again.");
+    }
   };
 
   const randomSeed = user?.name + Math.floor(Math.random() * 10000);
