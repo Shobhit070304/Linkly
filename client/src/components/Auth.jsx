@@ -26,13 +26,10 @@ const Auth = () => {
     //   "GitHub login is currently disabled. Please use Google to sign in."
     // );
     try {
-      console.log("Attempting GitHub login...");
       const userData = await signInWithPopup(auth, githubProvider);
-      console.log("GitHub login successful:", userData);
       login(userData.user);
       navigate("/home");
     } catch (error) {
-      console.error("GitHub login failed:", error);
       toast.error("GitHub login failed. Please try again.");
     }
   };

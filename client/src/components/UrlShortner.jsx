@@ -16,10 +16,13 @@ function UrlShortner() {
   const [longUrl, setLongUrl] = useState("");
   const [generatedShortUrl, setGeneratedShortUrl] = useState("");
   const [retrivedLongUrl, setRetrivedLongUrl] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingShortUrl, setLoadingShortUrl] = useState(false);
+  const [loadingLongUrl, setLoadingLongUrl] = useState(false);
   const [customShort, setCustomShort] = useState("");
   const [maxClicks, setMaxClicks] = useState(0);
-  const [expiresAt, setExpiresAt] = useState(new Date().toISOString().split('T')[0]);
+  const [expiresAt, setExpiresAt] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   const { user } = useContext(AuthContext);
 
@@ -29,7 +32,7 @@ function UrlShortner() {
       return;
     }
     setGeneratedShortUrl("");
-    setLoading(true);
+    setLoadingShortUrl(true);
 
     try {
       const token = localStorage.getItem("token");
@@ -57,7 +60,7 @@ function UrlShortner() {
     } catch (err) {
       toast.error("An error occurred while generating the short URL");
     } finally {
-      setLoading(false);
+      setLoadingShortUrl(false);
     }
   };
 
@@ -67,7 +70,7 @@ function UrlShortner() {
       return;
     }
     setRetrivedLongUrl("");
-    setLoading(true);
+    setLoadingLongUrl(true);
 
     try {
       const token = localStorage.getItem("token");
@@ -89,13 +92,12 @@ function UrlShortner() {
     } catch (err) {
       toast.error("An error occurred while retrieving the original URL");
     } finally {
-      setLoading(false);
+      setLoadingLongUrl(false);
     }
   };
 
   return (
     <main className="flex flex-col items-center justify-center px-4 py-12">
-
       <h1 className="text-3xl md:text-4xl text-gray-400 font-light tracking-tight leading-tight mb-8">
         🚀
         <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-400">
@@ -162,11 +164,12 @@ function UrlShortner() {
 
             <button
               onClick={handleShortenUrl}
-              disabled={loading}
-              className={`mt-2 w-full py-2.5 cursor-pointer rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-600/90 hover:to-pink-600/90 text-white text-sm font-medium transition-all duration-300 shadow-md ${loading ? "opacity-80 cursor-not-allowed" : ""
-                }`}
+              disabled={loadingShortUrl}
+              className={`mt-2 w-full py-2.5 cursor-pointer rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-600/90 hover:to-pink-600/90 text-white text-sm font-medium transition-all duration-300 shadow-md ${
+                loadingShortUrl ? "opacity-80 cursor-not-allowed" : ""
+              }`}
             >
-              {loading ? (
+              {loadingShortUrl ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2Icon className="h-4 w-4 animate-spin" />
                   Generating...
@@ -226,11 +229,12 @@ function UrlShortner() {
             />
             <button
               onClick={handleOriginalUrl}
-              disabled={loading}
-              className={`mt-2 w-full py-2.5 rounded-lg cursor-pointer bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-600/90 hover:to-rose-600/90 text-white text-sm font-medium transition-all duration-300 shadow-md ${loading ? "opacity-80 cursor-not-allowed" : ""
-                }`}
+              disabled={loadingLongUrl}
+              className={`mt-2 w-full py-2.5 rounded-lg cursor-pointer bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-600/90 hover:to-rose-600/90 text-white text-sm font-medium transition-all duration-300 shadow-md ${
+                loadingLongUrl ? "opacity-80 cursor-not-allowed" : ""
+              }`}
             >
-              {loading ? (
+              {loadingLongUrl ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2Icon className="h-4 w-4 animate-spin" />
                   Expanding...
