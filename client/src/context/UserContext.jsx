@@ -22,7 +22,6 @@ const UserContext = ({ children }) => {
   }, []);
 
   const login = async (userData) => {
-    console.log("User data received:", userData);
     const userInfo = {
       name: userData.displayName,
       email: userData.email,
@@ -30,10 +29,12 @@ const UserContext = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(userInfo));
     localStorage.setItem("token", userData.accessToken);
     setUser(userInfo);
-    const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/login`, {
-      name: userData.displayName,
-      email: userData.email,
-    },
+    const response = await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/user/login`,
+      {
+        name: userData.displayName,
+        email: userData.email,
+      },
       {
         headers: {
           Authorization: `Bearer ${userData.accessToken}`,
