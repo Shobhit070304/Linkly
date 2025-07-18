@@ -122,7 +122,6 @@ app.get("/:shortUrl", async (req, res) => {
 
     return res.status(301).redirect(url.longUrl);
   } catch (error) {
-    console.error(error);
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });

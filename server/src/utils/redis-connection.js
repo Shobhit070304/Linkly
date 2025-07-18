@@ -13,17 +13,11 @@ async function connectToRedis(retries = MAX_RETRIES) {
             });
 
             await redisClient.ping();
-            console.log("Connected to Redis successfully");
             return redisClient;
         } catch (error) {
-            console.error(
-                `Redis connection failed. Retries left: ${retries - 1}`,
-                error
-            );
             retries--;
 
             if (retries === 0) {
-                console.error("Failed to connect to Redis after multiple attempts");
                 process.exit(1);
             }
 
@@ -34,7 +28,6 @@ async function connectToRedis(retries = MAX_RETRIES) {
 
 function getRedisClient() {
     if (!redisClient) {
-        console.error("Redis client not initialized");
         process.exit(1);
     }
     return redisClient;

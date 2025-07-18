@@ -21,7 +21,6 @@ function Dashboard() {
             });
             setUrls(response.data.urls);
         } catch (error) {
-            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -40,10 +39,8 @@ function Dashboard() {
                     Authorization: `Bearer ${token}`
                 }
             });
-            console.log(response.data);
             fetchUrls();
         } catch (error) {
-            console.error(error);
         }
     };
 

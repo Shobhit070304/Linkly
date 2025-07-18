@@ -19,7 +19,6 @@ async function verifyUser(req, res, next) {
         };
         next();
     } catch (error) {
-        console.error('Firebase token verification failed:', error);
         return res.status(401).json({ error: 'Unauthorized, invalid token' });
     }
 }

@@ -4,7 +4,6 @@ const Url = require("../models/url-model");
 const User = require("../models/user-model");
 
 module.exports.shortenUrl = async (req, res) => {
-  console.log("Shorten URL request received");
   //Redis Client Connection
   const redisClient = getRedisClient();
   if (!redisClient) {
@@ -92,7 +91,6 @@ module.exports.shortenUrl = async (req, res) => {
       }
     }
   } catch (error) {
-    console.error(error);
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });
@@ -132,7 +130,6 @@ module.exports.originalUrl = async (req, res) => {
       }
     }
   } catch (error) {
-    console.error(error);
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });
@@ -144,7 +141,6 @@ module.exports.getMyUrls = async (req, res) => {
     const user = await User.findOne({ email: req.user.email }).populate("urls");
     return res.status(200).json({ status: true, urls: user.urls });
   } catch (error) {
-    console.error(error);
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });
@@ -189,7 +185,6 @@ module.exports.deleteUrl = async (req, res) => {
       .status(200)
       .json({ status: true, message: "URL deleted successfully" });
   } catch (error) {
-    console.error(error);
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });
