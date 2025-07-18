@@ -34,13 +34,13 @@ function Footer() {
 
         {/* Bottom Links */}
         <div className="flex items-center gap-4 text-xs">
-          <a href="#" className="hover:text-white transition">
+          <a href="" className="hover:text-white transition">
             Privacy
           </a>
-          <a href="#" className="hover:text-white transition">
+          <a href="" className="hover:text-white transition">
             Terms
           </a>
-          <a href="#" className="hover:text-white transition">
+          <a href="" className="hover:text-white transition">
             Cookies
           </a>
         </div>

@@ -30,7 +30,7 @@ function Hero() {
               className="w-full px-6 py-5 bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
             />
             <Link
-              to="/shorten"
+              to="/home"
               className="absolute right-2 top-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-5 py-3 rounded-md hover:opacity-90 transition duration-300 flex items-center"
             >
               Shorten <FaArrowRight className="ml-2" />
