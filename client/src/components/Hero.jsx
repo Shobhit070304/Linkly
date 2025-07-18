@@ -5,37 +5,45 @@ import { Link } from "react-router-dom";
 function Hero() {
   return (
     <section className="relative container mx-auto px-6 pt-24 pb-64 md:pt-36 md:pb-80">
-      <div className="max-w-5xl mx-auto relative z-10">
-        <h1 className="text-5xl md:text-7xl font-light tracking-tight leading-tight mb-8">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-400">
-            Next-gen
+      <div className="max-w-5xl mx-auto relative z-10 text-center md:text-left">
+        {/* Heading */}
+        <h1 className="text-4xl md:text-6xl font-light tracking-tight leading-tight mb-8">
+          <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
+            Smart &
           </span>{" "}
-          link management
+          Secure Link Management
         </h1>
-        <p className="text-xl text-gray-400 mb-12 max-w-3xl">
-          A smart URL shortener with easy-to-understand analytics and reliable
-          security for everyday use.
+
+        {/* Subheading */}
+        <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-3xl mx-auto md:mx-0">
+          Instantly shorten links with powerful analytics and privacy-first
+          features – all in one clean dashboard.
         </p>
+
+        {/* Input + CTA */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-grow max-w-2xl">
+          {/* Input Field */}
+          <div className="relative flex-grow max-w-2xl mx-auto sm:mx-0">
             <input
               type="text"
-              placeholder="Enter your long URL"
-              className="w-full px-6 py-5 bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder-gray-600 transition-all duration-300"
+              placeholder="Paste your long URL here"
+              className="w-full px-6 py-5 bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
             />
             <Link
-              to="/home"
-              className="absolute right-2 top-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-5 py-3 rounded-md hover:opacity-90 transition-opacity duration-300 flex items-center"
+              to="/shorten"
+              className="absolute right-2 top-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-5 py-3 rounded-md hover:opacity-90 transition duration-300 flex items-center"
             >
               Shorten <FaArrowRight className="ml-2" />
             </Link>
           </div>
-          <a
-            href="#features"
-            className="px-6 py-5 bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors duration-300"
+
+          {/* Optional Button — Remove if not needed */}
+          <Link
+            to="/dashboard"
+            className="px-6 py-5 text-sm bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors duration-300 text-white text-center"
           >
-            Explore Features
-          </a>
+            Visit Dashboard
+          </Link>
         </div>
       </div>
     </section>

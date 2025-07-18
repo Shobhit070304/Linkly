@@ -1,10 +1,11 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/UserContext";
 import { FaLink } from "react-icons/fa";
 
 function Navbar() {
   const { user, loading } = useContext(AuthContext);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const location = useLocation();
   const path = location.pathname.split("/")[1];
@@ -21,66 +22,107 @@ function Navbar() {
   const avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${randomSeed}`;
 
   return (
-    <nav className="container mx-auto px-[5%] py-8 flex justify-between items-center z-10">
-      <div className="flex items-center space-x-3">
-        <FaLink className="text-indigo-400 text-2xl" />
+    <nav className="relative text-white z-20">
+      <div className="container mx-auto px-[5%] py-5 flex justify-between items-center">
+        {/* Brand */}
         <Link
           to="/"
-          className="text-2xl font-light tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500"
+          className="flex items-center space-x-2 text-2xl font-light"
         >
-          LINKLY
+          <FaLink className="text-indigo-400" />
+          <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
+            Linkly
+          </span>
         </Link>
-      </div>
-      <div className="hidden md:flex items-center space-x-10">
-        {path === "" && (
-          <>
-            <Link
-              to="/home"
-              className="text-gray-400 hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider hover:bg-gray-700/50 px-4 py-2 rounded-lg"
-            >
-              Home
+
+        {/* Desktop Links */}
+        <div className="hidden md:flex items-center space-x-6 text-sm">
+          <Link to="/" className="hover:text-indigo-400 transition">
+            Home
+          </Link>
+          <Link to="/home" className="hover:text-indigo-400 transition">
+            Shorten URL
+          </Link>
+          {user && (
+            <Link to="/dashboard" className="hover:text-indigo-400 transition">
+              Dashboard
             </Link>
-            <a
-              href="#features"
-              className="text-gray-400 hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider hover:bg-gray-900/50 px-4 py-2 rounded-lg"
+          )}
+        </div>
+
+        {/* Auth / Avatar */}
+        <div className="hidden md:flex items-center">
+          {user ? (
+            <Link to="/auth">
+              <img
+                src={avatar}
+                alt="User"
+                className="w-9 h-9 rounded-full border-2 border-indigo-500 object-cover"
+              />
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="text-sm px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 transition"
             >
-              Features
-            </a>
-          </>
-        )}
-        {path !== "dashboard" && <Link
-          to={user ? "/dashboard" : "/auth"}
-          className="text-gray-400 hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider hover:bg-gray-900/50 px-4 py-2 rounded-lg"
+              Sign In
+            </Link>
+          )}
+        </div>
+
+        {/* Mobile Menu Toggle */}
+        <button
+          className="md:hidden text-gray-300"
+          onClick={() => setMenuOpen(!menuOpen)}
         >
-          Dashboard
-        </Link>}
-      </div>
-      <div className="flex items-center space-x-4">
-        {user ? (
-          <Link to="/auth">
-            <img
-              src={avatar}
-              alt="User Avatar"
-              className="w-10 h-10 rounded-full border-2 border-indigo-500"
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
             />
-          </Link>
-        ) : (
-          <Link
-            to="/auth"
-            className="px-5 py-2 text-sm text-white font-medium border border-gray-800 rounded-lg hover:bg-gray-900/50 transition-colors duration-300 backdrop-blur-sm"
-          >
-            Sign In
-          </Link>
-        )}
-        {path === "" && (
-          <Link
-            to="/home"
-            className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity duration-300 backdrop-blur-sm"
-          >
-            Get Started
-          </Link>
-        )}
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <div className="absolute top-full left-0 w-full bg-[#0f172a] bg-opacity-95 backdrop-blur-md md:hidden px-6 pb-4 space-y-3 shadow-lg z-30">
+          <Link to="/" className="block py-2 hover:text-indigo-400">
+            Home
+          </Link>
+          <Link to="/shorten" className="block py-2 hover:text-indigo-400">
+            Shorten URL
+          </Link>
+          {user && (
+            <Link to="/dashboard" className="block py-2 hover:text-indigo-400">
+              Dashboard
+            </Link>
+          )}
+          {user ? (
+            <Link to="/auth" className="flex items-center space-x-2 py-2">
+              <img
+                src={avatar}
+                alt="User"
+                className="w-8 h-8 rounded-full border-2 border-indigo-500"
+              />
+              <span>Profile</span>
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="block px-4 py-2 text-sm border border-gray-600 rounded-lg hover:bg-gray-800"
+            >
+              Sign In
+            </Link>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
