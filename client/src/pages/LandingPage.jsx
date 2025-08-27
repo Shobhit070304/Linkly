@@ -1,9 +1,12 @@
 import React from "react";
 import FuturisticBackground from "../components/Common/Background";
-import Footer from "../components/Common/Footer";
 import Navbar from "../components/Common/Navbar";
+import Footer from "../components/Common/Footer";
 import Hero from "../components/LandingPage/Hero";
+import Marquee from "../components/LandingPage/Marquee";
 import Features from "../components/LandingPage/Features";
+import HowToUse from "../components/LandingPage/HowToUse";
+import FAQs from "../components/LandingPage/FAQs";
 import CTA from "../components/LandingPage/CTA";
 
 const LandingPage = () => {
@@ -12,19 +15,15 @@ const LandingPage = () => {
       {/* Futuristic 3D Background */}
       <FuturisticBackground />
 
-      {/* Navigation */}
       <Navbar />
 
-      {/* Hero Section */}
       <Hero />
-
-      {/* Features Section */}
+      <Marquee />
       <Features />
-
-      {/* CTA Section */}
+      <HowToUse />
+      <FAQs />
       <CTA />
 
-      {/* Footer */}
       <Footer />
     </div>
   );
