@@ -23,6 +23,7 @@ function UrlShortner() {
   const [expiresAt, setExpiresAt] = useState(
     new Date().toISOString().split("T")[0]
   );
+  const [qrCode, setQrCode] = useState("");
 
   const { user } = useContext(AuthContext);
 
@@ -50,10 +51,12 @@ function UrlShortner() {
           },
         }
       );
+      console.log("Response", response);
 
       if (response.data) {
         toast.success("Short URL generated successfully!");
         setGeneratedShortUrl(response.data.shortUrl);
+        setQrCode(response.data.qrCode);
       } else {
         toast.error(response.data.message);
       }
@@ -94,6 +97,13 @@ function UrlShortner() {
     } finally {
       setLoadingLongUrl(false);
     }
+  };
+
+  const downloadQR = () => {
+    const a = document.createElement("a");
+    a.href = qrCode;
+    a.download = "linkly-qr.png";
+    a.click();
   };
 
   return (
@@ -202,6 +212,28 @@ function UrlShortner() {
                     <CopyIcon className="h-4 w-4" />
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* QR Preview */}
+            {qrCode ? (
+              <div className="flex flex-col items-center space-y-2">
+                <img
+                  src={qrCode}
+                  alt="QR Code"
+                  className="w-40 h-40 border p-2 bg-white rounded-lg shadow"
+                />
+                <button
+                  onClick={downloadQR}
+                  className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                >
+                  Download QR
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-zinc-400">
+                <AlertCircleIcon className="h-4 w-4" />
+                <span>No QR code available</span>
               </div>
             )}
           </div>

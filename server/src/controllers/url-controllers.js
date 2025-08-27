@@ -2,9 +2,11 @@ const { getRedisClient } = require("../utils/redis-connection");
 const encodeBase62 = require("../utils/helper");
 const Url = require("../models/url-model");
 const User = require("../models/user-model");
+const QRCode = require("qrcode");
+const path = require("path");
+const fs = require("fs");
 
 module.exports.shortenUrl = async (req, res) => {
-  //Redis Client Connection
   const redisClient = getRedisClient();
   if (!redisClient) {
     return res
@@ -12,7 +14,6 @@ module.exports.shortenUrl = async (req, res) => {
       .json({ status: false, error: "Redis client not initialized" });
   }
 
-  //Long URL
   const { longUrl, customShort, maxClicks, expiresAt } = req.body;
   if (!longUrl) {
     return res
@@ -21,76 +22,92 @@ module.exports.shortenUrl = async (req, res) => {
   }
 
   try {
-    // Check for url in redis cache
-    const cachedUrl = await redisClient.hget("urls", longUrl);
-    if (cachedUrl) {
-      return res
-        .status(200)
-        .json({ status: true, shortUrl: process.env.BACKEND_URL + cachedUrl });
+    // Check in Redis
+    const cached = await redisClient.hget("urls", longUrl);
+    if (cached) {
+      const { shortUrl, qrCode } = JSON.parse(cached);
+      return res.status(200).json({
+        status: true,
+        shortUrl: process.env.BACKEND_URL + shortUrl,
+        qrCode,
+      });
+    }
+
+    // Check in DB
+    const url = await Url.findOne({ longUrl });
+    if (url) {
+      const shortUrl = url.customShort || url.shortUrl;
+      // repopulate cache with qrCode too
+      await redisClient.hset("urls", {
+        [longUrl]: JSON.stringify({
+          shortUrl,
+          qrCode: url.qrCode,
+        }),
+      });
+      return res.status(200).json({
+        status: true,
+        shortUrl: process.env.BACKEND_URL + shortUrl,
+        qrCode: url.qrCode,
+      });
+    }
+
+    // Generate new shortUrl
+    let shortUrl;
+    if (customShort) {
+      shortUrl = customShort;
     } else {
-      // Check for url in database
-      const url = await Url.findOne({ longUrl: longUrl });
-      if (url) {
-        let shortUrl;
-        if (url.customShort !== "") {
-          shortUrl = url.customShort;
-        } else {
-          shortUrl = url.shortUrl;
-        }
-        await redisClient.hset("urls", {
-          [shortUrl]: url.longUrl,
-        });
-        return res
-          .status(200)
-          .json({ status: true, shortUrl: process.env.BACKEND_URL + shortUrl });
-      } else {
-        // Generate new short url
-        let shortUrl;
-        if (customShort) {
-          shortUrl = customShort;
-        } else {
-          const id = await redisClient.incr("counter");
-          shortUrl = encodeBase62(id);
-        }
-        await redisClient.hset("urls", {
-          [shortUrl]: longUrl,
-        });
+      const id = await redisClient.incr("counter");
+      shortUrl = encodeBase62(id);
+    }
 
-        const user = await User.findOne({ email: req.user.email });
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) {
+      return res.status(404).json({ status: false, error: "User not found" });
+    }
 
-        if (!user) {
-          return res
-            .status(404)
-            .json({ status: false, error: "User not found" });
-        } else {
-          let isCustomShortAvailable = await Url.findOne({
-            user: user._id,
-            customShort: shortUrl,
-          });
-          if (isCustomShortAvailable) {
-            return res.json({
-              status: false,
-              message: "Custom short URL not available. Use a different one.",
-            });
-          }
-          const newUrl = await Url.create({
-            customShort: customShort,
-            shortUrl: shortUrl,
-            longUrl: longUrl,
-            user: user._id,
-            clicks: 0,
-            maxClicks: maxClicks || undefined,
-            expiresAt: expiresAt || undefined,
-          });
-          user.urls.push(newUrl._id);
-          await user.save();
-        }
-        return res
-          .status(200)
-          .json({ status: true, shortUrl: process.env.BACKEND_URL + shortUrl });
+    // Check custom short availability
+    if (customShort) {
+      const isCustomShortAvailable = await Url.findOne({
+        customShort,
+      });
+      if (isCustomShortAvailable) {
+        return res.json({
+          status: false,
+          message: "Custom short URL not available. Use a different one.",
+        });
       }
     }
+
+    // Generate QR
+    const fullShortUrl = process.env.BACKEND_URL + shortUrl;
+    const qrCode = await QRCode.toDataURL(fullShortUrl);
+
+    // Save in DB
+    const newUrl = await Url.create({
+      customShort: customShort || "",
+      shortUrl,
+      longUrl,
+      user: user._id,
+      clicks: 0,
+      qrCode,
+      maxClicks: maxClicks || undefined,
+      expiresAt: expiresAt || undefined,
+    });
+    user.urls.push(newUrl._id);
+    await user.save();
+
+    // Save in Redis
+    await redisClient.hset("urls", {
+      [longUrl]: JSON.stringify({ shortUrl, qrCode }),
+    });
+
+    return res.status(200).json({
+      status: true,
+      shortUrl: process.env.BACKEND_URL + shortUrl,
+      qrCode,
+    });
   } catch (error) {
+    console.error("Shorten error:", error);
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });
