@@ -10,6 +10,9 @@ const urlSchema = new mongoose.Schema({
   maxClicks: { type: Number },
   expiresAt: { type: Date },
   qrCode: { type: String },
+  title: String,
+  description: String,
+  favicon: String,
   createdAt: { type: Date, default: Date.now },
 });
 

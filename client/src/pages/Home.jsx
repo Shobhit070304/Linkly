@@ -1,10 +1,10 @@
 import React from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import UrlShortner from "../components/UrlShortner";
+import Navbar from "../components/Common/Navbar";
+import Footer from "../components/Common/Footer";
+import UrlShortner from "../components/Home/UrlShortner";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import FuturisticBackground from "../components/Background";
+import FuturisticBackground from "../components/Common/Background";
 
 const Home = () => {
   return (

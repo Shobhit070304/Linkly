@@ -1,10 +1,10 @@
 import React from "react";
-import FuturisticBackground from "../components/Background";
-import Footer from "../components/Footer";
-import Navbar from "../components/Navbar";
-import Hero from "../components/Hero";
-import Features from "../components/Features";
-import CTA from "../components/CTA";
+import FuturisticBackground from "../components/Common/Background";
+import Footer from "../components/Common/Footer";
+import Navbar from "../components/Common/Navbar";
+import Hero from "../components/LandingPage/Hero";
+import Features from "../components/LandingPage/Features";
+import CTA from "../components/LandingPage/CTA";
 
 const LandingPage = () => {
   return (

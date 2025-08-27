@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
-import { auth, googleProvider, githubProvider } from "../utils/firebase";
+import { auth, googleProvider, githubProvider } from "../../utils/firebase";
 import { signInWithPopup } from "firebase/auth";
-import { AuthContext } from "../context/UserContext";
+import { AuthContext } from "../../context/UserContext";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";

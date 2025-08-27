@@ -120,11 +120,83 @@ app.get("/:shortUrl", async (req, res) => {
     // Increment click count
     await url.updateOne({ $inc: { clicks: 1 } });
 
-    return res.status(301).redirect(url.longUrl);
+    // Detect if request is from a crawler bot
+    const userAgent = req.headers["user-agent"] || "";
+    const isBot =
+      /(facebook|twitter|whatsapp|linkedin|discord|bot|crawl|spider)/i.test(
+        userAgent
+      );
+
+    if (isBot) {
+      return res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <title>${url.title || "Short Link"}</title>
+        <meta name="description" content="${url.description || ""}" />
+
+        <!-- OpenGraph tags -->
+        <meta property="og:title" content="${url.title || url.longUrl}" />
+        <meta property="og:description" content="${url.description || ""}" />
+        <meta property="og:url" content="${process.env.FRONTEND_URL}/${
+        url.shortUrl
+      }" />
+        <meta property="og:image" content="${
+          url.favicon || process.env.DEFAULT_PREVIEW_IMG
+        }" />
+        <meta property="og:type" content="website" />
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="${url.title || url.longUrl}" />
+        <meta name="twitter:description" content="${url.description || ""}" />
+        <meta name="twitter:image" content="${
+          url.favicon || process.env.DEFAULT_PREVIEW_IMG
+        }" />
+      </head>
+      <body>
+        <p>Redirecting to ${url.longUrl}...</p>
+        <script>
+          setTimeout(() => {
+            window.location.href = "${url.longUrl}";
+          }, 2000);
+        </script>
+      </body>
+      </html>
+    `);
+    }
+
+    // return res.status(301).redirect(url.longUrl);
+
+    // ✅ Instead of redirecting, send users to frontend preview page
+    return res.redirect(`${process.env.FRONTEND_URL}/preview/${url.shortUrl}`);
   } catch (error) {
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });
+  }
+});
+
+// routes/link.js
+app.get("/api/links/:shortCode", async (req, res) => {
+  try {
+    const { shortCode } = req.params;
+    const link = await Url.findOne({ shortUrl: shortCode });
+
+    if (!link) {
+      return res.status(404).json({ error: "Link not found" });
+    }
+
+    res.json({
+      longUrl: link.longUrl,
+      title: link.title || "",
+      description: link.description || "",
+      favicon: link.favicon || null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

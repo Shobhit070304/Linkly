@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AuthContext } from "../context/UserContext";
+import { AuthContext } from "../../context/UserContext";
 import { FaLink } from "react-icons/fa";
 
 function Navbar() {

@@ -1,10 +1,11 @@
 import { Route, Routes } from "react-router-dom";
 import "./App.css";
 import Home from "./pages/Home";
-import Auth from "./components/Auth";
+import Auth from "./components/Auth/Auth";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
+import PreviewPage from "./pages/PreviewPage";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Route path="/home" element={<Home />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/preview/:shortCode" element={<PreviewPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

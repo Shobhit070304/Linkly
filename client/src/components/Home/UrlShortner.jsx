@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import axios from "axios";
 import { useState } from "react";
-import { AuthContext } from "../context/UserContext";
+import { AuthContext } from "../../context/UserContext";
 import { toast } from "react-toastify";
 import {
   Link as LinkIcon,
@@ -24,6 +24,7 @@ function UrlShortner() {
     new Date().toISOString().split("T")[0]
   );
   const [qrCode, setQrCode] = useState("");
+  const [oneTime, setOneTime] = useState(false);
 
   const { user } = useContext(AuthContext);
 
@@ -147,17 +148,32 @@ function UrlShortner() {
               placeholder="Give a custom short URL (optional)"
               className="w-full px-4 py-2.5 rounded-lg bg-zinc-800/70 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 border border-zinc-700 hover:border-zinc-600 transition-colors"
             />
-            <div className="flex items-center gap-2">
-              <div className="w-1/2 flex flex-col">
-                <p className="text-xs text-zinc-400 my-2">Max Clicks</p>
-                <input
-                  type="number"
-                  placeholder="Enter the maximum number of clicks (optional)"
-                  className="w-full px-4 py-2.5 rounded-lg bg-zinc-800/70 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 border border-zinc-700 hover:border-zinc-600 transition-colors"
-                  name="maxClicks"
-                  value={maxClicks}
-                  onChange={(e) => setMaxClicks(e.target.value)}
-                />
+            <div className="flex items-start gap-2">
+              <div className="w-1/2 flex flex-col justify-center gap-2">
+                <div>
+                  <p className="text-xs text-zinc-400 my-2">Max Clicks</p>
+                  <input
+                    type="number"
+                    placeholder="Enter the maximum number of clicks (optional)"
+                    className="w-full px-4 py-2.5 rounded-lg bg-zinc-800/70 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 border border-zinc-700 hover:border-zinc-600 transition-colors"
+                    name="maxClicks"
+                    value={maxClicks}
+                    onChange={(e) => setMaxClicks(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-xs text-zinc-400">
+                    <input
+                      type="checkbox"
+                      checked={oneTime}
+                      onChange={(e) => {
+                        setOneTime(e.target.checked);
+                        setMaxClicks(e.target.checked ? 1 : 0);
+                      }}
+                    />
+                    One-Time (Self-Destruct) Link
+                  </label>
+                </div>
               </div>
               <div className="w-1/2 flex flex-col">
                 <p className="text-xs text-zinc-400 my-2">Expires At</p>

@@ -3,8 +3,7 @@ const encodeBase62 = require("../utils/helper");
 const Url = require("../models/url-model");
 const User = require("../models/user-model");
 const QRCode = require("qrcode");
-const path = require("path");
-const fs = require("fs");
+const ogs = require("open-graph-scraper");
 
 module.exports.shortenUrl = async (req, res) => {
   const redisClient = getRedisClient();
@@ -78,6 +77,19 @@ module.exports.shortenUrl = async (req, res) => {
       }
     }
 
+    // Fetch meta info
+    let meta = {};
+    try {
+      const { result } = await ogs({ url: longUrl });
+      meta = {
+        title: result.ogTitle || result.twitterTitle || longUrl,
+        description: result.ogDescription || "",
+        favicon: result.favicon || "",
+      };
+    } catch (err) {
+      meta = { title: longUrl, description: "", favicon: "" };
+    }
+
     // Generate QR
     const fullShortUrl = process.env.BACKEND_URL + shortUrl;
     const qrCode = await QRCode.toDataURL(fullShortUrl);
@@ -92,6 +104,7 @@ module.exports.shortenUrl = async (req, res) => {
       qrCode,
       maxClicks: maxClicks || undefined,
       expiresAt: expiresAt || undefined,
+      ...meta,
     });
     user.urls.push(newUrl._id);
     await user.save();
