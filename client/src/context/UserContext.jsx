@@ -22,25 +22,41 @@ const UserContext = ({ children }) => {
   }, []);
 
   const login = async (userData) => {
-    const userInfo = {
-      name: userData.displayName,
-      email: userData.email,
-    };
-    localStorage.setItem("user", JSON.stringify(userInfo));
-    localStorage.setItem("token", userData.accessToken);
-    setUser(userInfo);
-    const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/user/login`,
-      {
-        name: userData.displayName,
-        email: userData.email,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${userData.accessToken}`,
-        },
+    try {
+      if (!userData) {
+        console.error("Login failed: No user data provided");
+        return;
       }
-    );
+      
+      const userInfo = {
+        name: userData.displayName || "User",
+        email: userData.email || "",
+      };
+      
+      localStorage.setItem("user", JSON.stringify(userInfo));
+      localStorage.setItem("token", userData.accessToken || "");
+      setUser(userInfo);
+      
+      try {
+        await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/user/login`,
+          {
+            name: userInfo.name,
+            email: userInfo.email,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${userData.accessToken || ""}`,
+            },
+          }
+        );
+      } catch (apiError) {
+        console.error("API login error:", apiError);
+        // Still keep the user logged in on the client side even if the API call fails
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+    }
   };
 
   const logout = () => {

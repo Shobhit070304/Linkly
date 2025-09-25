@@ -1,2 +1,39 @@
 @import "tailwindcss";
 
+/* Base styles */
+:root {
+  --primary-color: #3b82f6;
+  --secondary-color: #1e40af;
+  --text-color: #f3f4f6;
+  --background-color: #111827;
+  --error-color: #ef4444;
+}
+
+/* Optimize rendering */
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark gradient background */
+body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: var(--text-color);
+  min-height: 100vh;
+}
+
+/* Prevent layout shifts */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Improve performance for animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -52,7 +52,7 @@ function UrlShortner() {
           },
         }
       );
-      console.log("Response", response);
+      
 
       if (response.data) {
         toast.success("Short URL generated successfully!");

@@ -19,6 +19,11 @@ function Dashboard() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Authentication token missing. Please login again.");
+        return;
+      }
+      
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/url/me`,
         {
@@ -27,9 +32,17 @@ function Dashboard() {
           },
         }
       );
-      setUrls(response.data.urls);
-      setQrCode(response.data.qrCode);
+      
+      if (response.data && response.data.urls) {
+        setUrls(response.data.urls || []);
+        setQrCode(response.data.qrCode || '');
+      } else {
+        setUrls([]);
+      }
     } catch (error) {
+      console.error("Error fetching URLs:", error);
+      toast.error("Failed to load your URLs. Please try again later.");
+      setUrls([]);
     } finally {
       setLoading(false);
     }
@@ -41,6 +54,11 @@ function Dashboard() {
   const handleDelete = async (shortUrl) => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Authentication token missing. Please login again.");
+        return;
+      }
+      
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/url/delete`,
         {
@@ -52,8 +70,17 @@ function Dashboard() {
           },
         }
       );
-      fetchUrls();
-    } catch (error) {}
+      
+      if (response.data && response.data.status) {
+        toast.success("URL deleted successfully");
+        fetchUrls();
+      } else {
+        toast.error("Failed to delete URL");
+      }
+    } catch (error) {
+      console.error("Error deleting URL:", error);
+      toast.error("Failed to delete URL. Please try again later.");
+    }
   };
 
   return (
