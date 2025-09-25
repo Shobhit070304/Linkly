@@ -7,6 +7,7 @@ const helmet = require("helmet");
 const connectDB = require("./db/db.js");
 const { getRedisClient } = require("./utils/redis-connection.js");
 const rateLimit = require("express-rate-limit");
+const morgan = require("morgan");
 
 // Security and performance middleware
 const limiter = rateLimit({
@@ -37,18 +38,15 @@ const Url = require("./models/url-model.js");
 //Middleware
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL : "*",
+    origin: process.env.FRONTEND_URL || "*",
     credentials: true,
   })
 );
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(express.json({ limit: "1mb" }));
 
-// Add request logging in development
-if (process.env.NODE_ENV !== 'production') {
-  const morgan = require('morgan');
-  app.use(morgan('dev'));
-}
+//  Logging
+app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
   res.send("Hello from Backend");
@@ -61,7 +59,7 @@ app.use("/api/user", userRoutes);
 app.use((req, res, next) => {
   res.status(404).json({
     status: false,
-    message: "Resource not found"
+    message: "Resource not found",
   });
 });
 
@@ -70,7 +68,7 @@ app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
     status: false,
-    message: err.message
+    message: err.message,
   });
 });
 
@@ -175,9 +173,11 @@ app.get("/:shortUrl", async (req, res) => {
         <!-- OpenGraph tags -->
         <meta property="og:title" content="${url.title || url.longUrl}" />
         <meta property="og:description" content="${url.description || ""}" />
-        <meta property="og:url" content="${process.env.FRONTEND_URL}/${url.shortUrl
-        }" />
-        <meta property="og:image" content="${url.favicon || process.env.DEFAULT_PREVIEW_IMG
+        <meta property="og:url" content="${process.env.FRONTEND_URL}/${
+        url.shortUrl
+      }" />
+        <meta property="og:image" content="${
+          url.favicon || process.env.DEFAULT_PREVIEW_IMG
         }" />
         <meta property="og:type" content="website" />
 
@@ -185,7 +185,8 @@ app.get("/:shortUrl", async (req, res) => {
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="${url.title || url.longUrl}" />
         <meta name="twitter:description" content="${url.description || ""}" />
-        <meta name="twitter:image" content="${url.favicon || process.env.DEFAULT_PREVIEW_IMG
+        <meta name="twitter:image" content="${
+          url.favicon || process.env.DEFAULT_PREVIEW_IMG
         }" />
       </head>
       <body>
