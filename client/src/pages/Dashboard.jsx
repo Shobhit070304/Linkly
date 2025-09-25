@@ -1,8 +1,6 @@
 import {
   ChartBarIcon,
   CopyIcon,
-  LinkIcon,
-  PencilIcon,
   QrCodeIcon,
   TrashIcon,
 } from "lucide-react";
