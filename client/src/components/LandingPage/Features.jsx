@@ -1,56 +1,35 @@
-import React, { useState } from "react";
-import {
-  FaCheck,
-  FaArrowRight,
-  FaQuestionCircle,
-  FaCopy,
-  FaChartLine,
-  FaLink,
-  FaLock,
-  FaQrcode,
-  FaClock,
-  FaUser,
-  FaDesktop,
-  FaShareAlt,
-  FaEye,
-  FaDownload,
-  FaTrash,
-  FaChevronDown,
-  FaChevronRight,
-  FaSignInAlt,
-  FaMagic,
-  FaChartBar,
-} from "react-icons/fa";
+import React from "react";
+import { ChartLine, LayoutDashboard, Link, Lock, MagnetIcon, Pen, QrCode } from "lucide-react";
 
 function Features() {
   const features = [
     {
-      icon: <FaLink className="text-lg" />,
+      icon: <Link className="text-lg" />,
       title: "URL Shortening",
       description: "Create short URLs with custom aliases"
     },
     {
-      icon: <FaChartLine className="text-lg" />,
+      icon: <ChartLine className="text-lg" />,
       title: "Click Analytics",
       description: "Track real-time clicks and engagement"
     },
     {
-      icon: <FaQrcode className="text-lg" />,
+      icon: <QrCode className="text-lg" />,
       title: "QR Codes",
       description: "Generate and download QR codes"
     },
     {
-      icon: <FaLock className="text-lg" />,
+      icon: <Lock className="text-lg" />,
       title: "Secure Links",
       description: "Password protection and encryption"
     },
     {
-      icon: <FaMagic className="text-lg" />,
+      icon: <Pen className="text-lg" />,
       title: "Custom Branding",
       description: "Custom domains and branded links"
     },
     {
-      icon: <FaDesktop className="text-lg" />,
+      icon: <LayoutDashboard className="text-lg" />,
       title: "Dashboard",
       description: "Manage all URLs in one place"
     }
@@ -75,20 +54,20 @@ function Features() {
         {/* Features Grid - 3x2 layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="group relative bg-gradient-to-b from-gray-900/40 to-gray-900/10 p-8 rounded-2xl border border-gray-800/50 hover:border-indigo-500/40 transition-all duration-300 overflow-hidden"
             >
               {/* Hover effect background */}
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-              
+
               {/* Icon */}
               <div className="w-16 h-16 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <div className="text-indigo-400 group-hover:text-indigo-300">
                   {feature.icon}
                 </div>
               </div>
-              
+
               {/* Content */}
               <h3 className="text-xl font-medium text-white mb-4">
                 {feature.title}
@@ -96,7 +75,7 @@ function Features() {
               <p className="text-gray-300 text-md leading-relaxed">
                 {feature.description}
               </p>
-              
+
               {/* Decorative corner */}
               <div className="absolute top-0 right-0 w-20 h-20 overflow-hidden">
                 <div className="absolute top-0 right-0 w-10 h-10 bg-gradient-to-bl from-indigo-500/30 to-transparent rounded-bl-2xl"></div>

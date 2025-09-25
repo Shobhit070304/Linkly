@@ -1,5 +1,5 @@
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 
 function FAQs() {
   const [activeIndex, setActiveIndex] = useState(null);
@@ -68,9 +68,9 @@ function FAQs() {
                 </span>
                 <span className="text-indigo-400 flex-shrink-0 transform transition-transform duration-300 text-xs">
                   {activeIndex === index ? (
-                    <FaChevronDown />
+                    <ChevronDown />
                   ) : (
-                    <FaChevronRight />
+                    <ChevronRight />
                   )}
                 </span>
               </button>

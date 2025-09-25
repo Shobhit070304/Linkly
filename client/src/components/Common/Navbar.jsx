@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/UserContext";
-import { FaLink } from "react-icons/fa";
+import { Link as LinkIcon } from "lucide-react";
 
 function Navbar() {
   const { user, loading } = useContext(AuthContext);
@@ -29,7 +29,7 @@ function Navbar() {
           to="/"
           className="flex items-center space-x-2 text-2xl font-light"
         >
-          <FaLink className="text-indigo-400" />
+          <LinkIcon className="text-indigo-400" />
           <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
             Linkly
           </span>

@@ -1,10 +1,4 @@
-import {
-  FaArrowRight,
-  FaChartBar,
-  FaMagic,
-  FaShareAlt,
-  FaSignInAlt,
-} from "react-icons/fa";
+import { ArrowRight, AtSignIcon, ChartBar, Share, Stars } from "lucide-react";
 
 function HowToUse() {
   const steps = [
@@ -12,25 +6,25 @@ function HowToUse() {
       step: "1",
       title: "Create Account",
       description: "Sign up for your free Linkly account in seconds",
-      icon: <FaSignInAlt className="text-sm" />,
+      icon: <AtSignIcon className="text-sm" />,
     },
     {
       step: "2",
       title: "Shorten URL",
       description: "Paste long URL and customize your short link",
-      icon: <FaMagic className="text-sm" />,
+      icon: <Stars className="text-sm" />,
     },
     {
       step: "3",
       title: "Share & Track",
       description: "Share your link and monitor performance",
-      icon: <FaShareAlt className="text-sm" />,
+      icon: <Share className="text-sm" />,
     },
     {
       step: "4",
       title: "Manage Links",
       description: "Organize, edit, or delete from dashboard",
-      icon: <FaChartBar className="text-sm" />,
+      icon: <ChartBar className="text-sm" />,
     },
   ];
 
@@ -94,7 +88,7 @@ function HowToUse() {
         <div className="text-center mt-14">
           <button className="px-5 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-sm hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 flex items-center justify-center gap-2 group mx-auto">
             Get Started Now
-            <FaArrowRight className="text-xs group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="text-xs group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       </div>

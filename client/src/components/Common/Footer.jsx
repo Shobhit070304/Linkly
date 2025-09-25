@@ -1,6 +1,5 @@
+import { Github, Linkedin, LinkIcon } from "lucide-react";
 import React from "react";
-import { FaLink } from "react-icons/fa";
-import { FiGithub, FiLinkedin } from "react-icons/fi";
 
 function Footer() {
   return (
@@ -8,7 +7,7 @@ function Footer() {
       <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
         {/* Logo and tagline */}
         <div className="flex items-center gap-3">
-          <FaLink className="text-indigo-400 text-lg" />
+          <LinkIcon className="text-indigo-400 text-lg" />
           <span className="font-light text-base bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
             LINKLY
           </span>
@@ -21,14 +20,14 @@ function Footer() {
             className="hover:text-white transition"
             aria-label="GitHub"
           >
-            <FiGithub className="text-lg" />
+            <Github className="text-lg" />
           </a>
           <a
             href="https://www.linkedin.com/in/shobhit-kumar-sharma-17bb4223a"
             className="hover:text-white transition"
             aria-label="LinkedIn"
           >
-            <FiLinkedin className="text-lg" />
+            <Linkedin className="text-lg" />
           </a>
         </div>
 

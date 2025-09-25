@@ -1,5 +1,5 @@
 import React from "react";
-import { FaArrowRight } from "react-icons/fa";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 function Hero() {
@@ -43,7 +43,7 @@ function Hero() {
               to="/home"
               className="absolute right-2 top-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-5 py-3 rounded-lg hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 flex items-center group"
             >
-              Shorten <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+              Shorten <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
