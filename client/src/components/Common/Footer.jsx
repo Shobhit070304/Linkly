@@ -1,6 +1,6 @@
 import React from "react";
 import { FaLink } from "react-icons/fa";
-import { FiGithub, FiTwitter, FiLinkedin } from "react-icons/fi";
+import { FiGithub, FiLinkedin } from "react-icons/fi";
 
 function Footer() {
   return (
