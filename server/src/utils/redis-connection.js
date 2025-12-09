@@ -13,11 +13,14 @@ async function connectToRedis(retries = MAX_RETRIES) {
             });
 
             await redisClient.ping();
+            console.log('✅ Redis connected successfully');
             return redisClient;
         } catch (error) {
             retries--;
+            console.error(`❌ Redis connection failed. Retries left: ${retries}`, error.message);
 
             if (retries === 0) {
+                console.error('❌ Redis connection failed after all retries. Exiting...');
                 process.exit(1);
             }
 

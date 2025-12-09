@@ -52,27 +52,33 @@ app.get("/", (req, res) => {
   res.send("Hello from Backend");
 });
 
+// API Routes - these must come before the wildcard route
 app.use("/api/url", urlRoutes);
 app.use("/api/user", userRoutes);
 
-// 404 handler
-app.use((req, res, next) => {
-  res.status(404).json({
-    status: false,
-    message: "Resource not found",
-  });
+// API route for getting link metadata
+app.get("/api/links/:shortCode", async (req, res) => {
+  try {
+    const { shortCode } = req.params;
+    const link = await Url.findOne({ shortUrl: shortCode });
+
+    if (!link) {
+      return res.status(404).json({ error: "Link not found" });
+    }
+
+    res.json({
+      longUrl: link.longUrl,
+      title: link.title || "",
+      description: link.description || "",
+      favicon: link.favicon || null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-// Global error handler
-app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
-    status: false,
-    message: err.message,
-  });
-});
-
-// Redirect to Long URL
+// Redirect to Long URL (wildcard route - must be after all specific routes)
 app.get("/:shortUrl", async (req, res) => {
   const redisClient = getRedisClient();
   if (!redisClient) {
@@ -173,11 +179,9 @@ app.get("/:shortUrl", async (req, res) => {
         <!-- OpenGraph tags -->
         <meta property="og:title" content="${url.title || url.longUrl}" />
         <meta property="og:description" content="${url.description || ""}" />
-        <meta property="og:url" content="${process.env.FRONTEND_URL}/${
-        url.shortUrl
-      }" />
-        <meta property="og:image" content="${
-          url.favicon || process.env.DEFAULT_PREVIEW_IMG
+        <meta property="og:url" content="${process.env.FRONTEND_URL}/${url.shortUrl
+        }" />
+        <meta property="og:image" content="${url.favicon || process.env.DEFAULT_PREVIEW_IMG
         }" />
         <meta property="og:type" content="website" />
 
@@ -185,8 +189,7 @@ app.get("/:shortUrl", async (req, res) => {
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="${url.title || url.longUrl}" />
         <meta name="twitter:description" content="${url.description || ""}" />
-        <meta name="twitter:image" content="${
-          url.favicon || process.env.DEFAULT_PREVIEW_IMG
+        <meta name="twitter:image" content="${url.favicon || process.env.DEFAULT_PREVIEW_IMG
         }" />
       </head>
       <body>
@@ -212,26 +215,21 @@ app.get("/:shortUrl", async (req, res) => {
   }
 });
 
-// routes/link.js
-app.get("/api/links/:shortCode", async (req, res) => {
-  try {
-    const { shortCode } = req.params;
-    const link = await Url.findOne({ shortUrl: shortCode });
+// 404 handler - must be after all routes
+app.use((req, res, next) => {
+  res.status(404).json({
+    status: false,
+    message: "Resource not found",
+  });
+});
 
-    if (!link) {
-      return res.status(404).json({ error: "Link not found" });
-    }
-
-    res.json({
-      longUrl: link.longUrl,
-      title: link.title || "",
-      description: link.description || "",
-      favicon: link.favicon || null,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
+// Global error handler
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    status: false,
+    message: err.message,
+  });
 });
 
 module.exports = app;

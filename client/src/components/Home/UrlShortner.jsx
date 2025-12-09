@@ -52,8 +52,7 @@ function UrlShortner() {
           },
         }
       );
-      
-
+      console.log("Response Data", response.data);
       if (response.data) {
         toast.success("Short URL generated successfully!");
         setGeneratedShortUrl(response.data.shortUrl);
@@ -191,9 +190,8 @@ function UrlShortner() {
             <button
               onClick={handleShortenUrl}
               disabled={loadingShortUrl}
-              className={`mt-2 w-full py-2.5 cursor-pointer rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-600/90 hover:to-pink-600/90 text-white text-sm font-medium transition-all duration-300 shadow-md ${
-                loadingShortUrl ? "opacity-80 cursor-not-allowed" : ""
-              }`}
+              className={`mt-2 w-full py-2.5 cursor-pointer rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-600/90 hover:to-pink-600/90 text-white text-sm font-medium transition-all duration-300 shadow-md ${loadingShortUrl ? "opacity-80 cursor-not-allowed" : ""
+                }`}
             >
               {loadingShortUrl ? (
                 <span className="flex items-center justify-center gap-2">
@@ -278,9 +276,8 @@ function UrlShortner() {
             <button
               onClick={handleOriginalUrl}
               disabled={loadingLongUrl}
-              className={`mt-2 w-full py-2.5 rounded-lg cursor-pointer bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-600/90 hover:to-rose-600/90 text-white text-sm font-medium transition-all duration-300 shadow-md ${
-                loadingLongUrl ? "opacity-80 cursor-not-allowed" : ""
-              }`}
+              className={`mt-2 w-full py-2.5 rounded-lg cursor-pointer bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-600/90 hover:to-rose-600/90 text-white text-sm font-medium transition-all duration-300 shadow-md ${loadingLongUrl ? "opacity-80 cursor-not-allowed" : ""
+                }`}
             >
               {loadingLongUrl ? (
                 <span className="flex items-center justify-center gap-2">

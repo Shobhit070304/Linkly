@@ -13,7 +13,6 @@ const urlSchema = new mongoose.Schema({
   title: String,
   description: String,
   favicon: String,
-  createdAt: { type: Date, default: Date.now },
 });
 
 const Url = mongoose.model("Url", urlSchema);
