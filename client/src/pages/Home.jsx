@@ -2,7 +2,7 @@ import React from "react";
 import Navbar from "../components/Common/Navbar";
 import Footer from "../components/Common/Footer";
 import UrlShortner from "../components/Home/UrlShortner";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import FuturisticBackground from "../components/Common/Background";
 
@@ -26,7 +26,10 @@ const Home = () => {
         bodyClassName="!p-0 !m-0"
         progressClassName="!bg-gradient-to-r !from-purple-500 !to-pink-500"
         closeButton={({ closeToast }) => (
-          <button className="!text-gray-400 cursor-pointer hover:!text-white !transition-colors">
+          <button
+            onClick={closeToast}
+            className="!text-gray-400 cursor-pointer hover:!text-white !transition-colors"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"

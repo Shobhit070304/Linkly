@@ -86,11 +86,11 @@ function UrlShortner() {
           },
         }
       );
-      if (response.data.status) {
+      if (response.data && response.data.status) {
         toast.success("Original URL retrieved successfully!");
         setRetrivedLongUrl(response.data.longUrl);
       } else {
-        toast.error("Failed to retrieve original URL");
+        toast.error(response.data?.message || "Failed to retrieve original URL");
       }
     } catch (err) {
       toast.error("An error occurred while retrieving the original URL");

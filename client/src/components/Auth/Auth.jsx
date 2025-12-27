@@ -16,7 +16,7 @@ const Auth = () => {
       login(userData.user);
       navigate("/home");
       toast.success("Login successful");
-    } catch (error) {
+    } catch {
       toast.error("Google login failed. Please try again.");
     }
   };
@@ -29,7 +29,7 @@ const Auth = () => {
       const userData = await signInWithPopup(auth, githubProvider);
       login(userData.user);
       navigate("/home");
-    } catch (error) {
+    } catch {
       toast.error("GitHub login failed. Please try again.");
     }
   };

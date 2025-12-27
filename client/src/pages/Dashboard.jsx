@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import Background from "../components/Common/Background";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import Navbar from "../components/Common/Navbar";
@@ -21,7 +22,7 @@ function Dashboard() {
         toast.error("Authentication token missing. Please login again.");
         return;
       }
-      
+
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/url/me`,
         {
@@ -30,10 +31,9 @@ function Dashboard() {
           },
         }
       );
-      
+
       if (response.data && response.data.urls) {
         setUrls(response.data.urls || []);
-        setQrCode(response.data.qrCode || '');
       } else {
         setUrls([]);
       }
@@ -56,7 +56,7 @@ function Dashboard() {
         toast.error("Authentication token missing. Please login again.");
         return;
       }
-      
+
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/url/delete`,
         {
@@ -68,7 +68,7 @@ function Dashboard() {
           },
         }
       );
-      
+
       if (response.data && response.data.status) {
         toast.success("URL deleted successfully");
         fetchUrls();
