@@ -21,28 +21,29 @@ module.exports.shortenUrl = async (req, res) => {
   }
 
   try {
-    // Check in Redis
-    const cached = await redisClient.hget("urls", longUrl);
-    if (cached) {
-      const { shortUrl, qrCode } = JSON.parse(cached);
-      return res.status(200).json({
-        status: true,
-        shortUrl: process.env.BACKEND_URL + shortUrl,
-        qrCode,
-      });
-    }
-
-    // Check in DB
+    // Check in DB first (since we cache by shortUrl, not longUrl)
     const url = await Url.findOne({ longUrl });
     if (url) {
       const shortUrl = url.customShort || url.shortUrl;
-      // repopulate cache with qrCode too
-      await redisClient.hset("urls", {
-        [longUrl]: JSON.stringify({
-          shortUrl,
-          qrCode: url.qrCode,
-        }),
-      });
+      
+      // Check if already cached
+      const cached = await redisClient.hget("urls", shortUrl);
+      if (cached) {
+        let parsedData;
+        try {
+          parsedData = typeof cached === 'string' ? JSON.parse(cached) : cached;
+        } catch (parseError) {
+          parsedData = { shortUrl, qrCode: null };
+        }
+        
+        return res.status(200).json({
+          status: true,
+          shortUrl: process.env.BACKEND_URL + shortUrl,
+          qrCode: parsedData.qrCode || url.qrCode,
+        });
+      }
+      
+      // Return from DB and cache
       return res.status(200).json({
         status: true,
         shortUrl: process.env.BACKEND_URL + shortUrl,
@@ -109,9 +110,9 @@ module.exports.shortenUrl = async (req, res) => {
     user.urls.push(newUrl._id);
     await user.save();
 
-    // Save in Redis
+    // Save in Redis using shortUrl as key (consistent with redirect logic)
     await redisClient.hset("urls", {
-      [longUrl]: JSON.stringify({ shortUrl, qrCode }),
+      [shortUrl]: longUrl, // Store the actual long URL for redirect
     });
 
     return res.status(200).json({
@@ -151,6 +152,7 @@ module.exports.originalUrl = async (req, res) => {
     } else {
       const url = await Url.findOne({ shortUrl: shortUrl });
       if (url) {
+        // Cache the result for future requests
         await redisClient.hset("urls", {
           [url.shortUrl]: url.longUrl,
         });
@@ -160,6 +162,7 @@ module.exports.originalUrl = async (req, res) => {
       }
     }
   } catch (error) {
+    console.error("Original URL error:", error);
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });
