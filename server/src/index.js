@@ -6,6 +6,8 @@ const compression = require("compression");
 const helmet = require("helmet");
 const { connectDB } = require("./db/postgres.js");
 const { getRedisClient } = require("./utils/redis-connection.js");
+const analyticsQueue = require("./queues/analyticsQueue.js");
+require("./workers/analyticsWorker.js"); // Initialize worker
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 
@@ -66,6 +68,14 @@ app.get("/api/links/:shortCode", async (req, res) => {
       return res.status(404).json({ error: "Link not found" });
     }
 
+    const now = new Date();
+    let isExpired = link.expiresAt && now > link.expiresAt;
+    let isClickLimitReached = link.maxClicks && link.clicks >= link.maxClicks;
+
+    if (isExpired || isClickLimitReached) {
+      return res.status(410).json({ error: "Link expired or click limit reached" });
+    }
+
     res.json({
       longUrl: link.longUrl,
       title: link.title || "",
@@ -90,82 +100,41 @@ app.get("/:shortUrl", async (req, res) => {
   const { shortUrl } = req.params;
 
   try {
-    // Check Redis cache
-    const cachedUrl = await redisClient.hget("urls", shortUrl);
+    // We always check the DB for accurate limits & expiration
+    const urlData = await Url.findOne({ where: { shortUrl } });
 
-    if (cachedUrl) {
-      // Check DB for limits and expiration
-      const urlData = await Url.findOne({ where: { shortUrl } });
-
-      if (!urlData) {
-        return res.status(404).json({ status: false, error: "URL not found" });
-      }
-
-      const now = new Date();
-
-      let isExpired = urlData.expiresAt && now > urlData.expiresAt;
-      let isClickLimitReached =
-        urlData.maxClicks && urlData.clicks >= urlData.maxClicks;
-
-      // If expired or click limit reached, delete from Redis and DB
-      if (isExpired) {
-        await redisClient.hdel("urls", shortUrl);
-        await Url.destroy({ where: { shortUrl } });
-        return res.status(410).json({ status: false, error: "Link expired" });
-      }
-      if (isClickLimitReached) {
-        await redisClient.hdel("urls", shortUrl);
-        await Url.destroy({ where: { shortUrl } });
-        return res
-          .status(410)
-          .json({ status: false, error: "Click limit reached" });
-      }
-
-      await Url.update({ clicks: urlData.clicks + 1 }, { where: { shortUrl } });
-
-      return res.status(301).redirect(cachedUrl);
-    }
-
-    // Not in cache, check DB
-    const url = await Url.findOne({ where: { shortUrl } });
-
-    if (!url) {
+    if (!urlData) {
       return res.status(404).json({ status: false, error: "URL not found" });
     }
 
-    // Expiration & click limit checks
     const now = new Date();
+    let isExpired = urlData.expiresAt && now > urlData.expiresAt;
+    let isClickLimitReached = urlData.maxClicks && urlData.clicks >= urlData.maxClicks;
 
-    let isExpired = url.expiresAt && now > url.expiresAt;
-    let isClickLimitReached = url.maxClicks && url.clicks >= url.maxClicks;
-
-    if (isExpired) {
+    // If expired or click limit reached, ONLY delete from Redis. Do NOT destroy DB record to preserve analytics!
+    if (isExpired || isClickLimitReached) {
       await redisClient.hdel("urls", shortUrl);
-      await Url.destroy({ where: { shortUrl } });
-      return res.status(410).json({ status: false, error: "Link expired" });
+      // We still redirect to the preview page, which will call the API and display an "Expired" message nicely to the user.
+      return res.redirect(`${process.env.FRONTEND_URL}/preview/${urlData.shortUrl}`);
     }
 
-    if (isClickLimitReached) {
-      await redisClient.hdel("urls", shortUrl);
-      await Url.destroy({ where: { shortUrl } });
-      // It should be go to the client side and show a message that the click limit has been reached
-      return res
-        .status(410)
-        .json({ status: false, error: "Click limit reached" });
-    }
-
-    // Cache the result in Redis
-    await redisClient.hset("urls", { [shortUrl]: url.longUrl });
+    // Cache the longUrl in Redis for quick originalUrl retrieval lookups
+    await redisClient.hset("urls", { [shortUrl]: urlData.longUrl });
 
     // Increment click count
-    await Url.update({ clicks: url.clicks + 1 }, { where: { shortUrl } });
+    await Url.update({ clicks: urlData.clicks + 1 }, { where: { shortUrl } });
+
+    // Asynchronously log analytics via BullMQ
+    analyticsQueue.add("log-click", {
+      urlId: urlData.id,
+      ipAddress: req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip,
+      userAgent: req.headers["user-agent"] || "",
+      referrer: req.headers["referer"] || req.headers["referrer"] || "",
+    });
 
     // Detect if request is from a crawler bot
     const userAgent = req.headers["user-agent"] || "";
-    const isBot =
-      /(facebook|twitter|whatsapp|linkedin|discord|bot|crawl|spider)/i.test(
-        userAgent
-      );
+    const isBot = /(facebook|twitter|whatsapp|linkedin|discord|bot|crawl|spider)/i.test(userAgent);
 
     if (isBot) {
       return res.send(`
@@ -173,30 +142,27 @@ app.get("/:shortUrl", async (req, res) => {
       <html lang="en">
       <head>
         <meta charset="utf-8" />
-        <title>${url.title || "Short Link"}</title>
-        <meta name="description" content="${url.description || ""}" />
+        <title>${urlData.title || "Short Link"}</title>
+        <meta name="description" content="${urlData.description || ""}" />
 
         <!-- OpenGraph tags -->
-        <meta property="og:title" content="${url.title || url.longUrl}" />
-        <meta property="og:description" content="${url.description || ""}" />
-        <meta property="og:url" content="${process.env.FRONTEND_URL}/${url.shortUrl
-        }" />
-        <meta property="og:image" content="${url.favicon || process.env.DEFAULT_PREVIEW_IMG
-        }" />
+        <meta property="og:title" content="${urlData.title || urlData.longUrl}" />
+        <meta property="og:description" content="${urlData.description || ""}" />
+        <meta property="og:url" content="${process.env.FRONTEND_URL}/${urlData.shortUrl}" />
+        <meta property="og:image" content="${urlData.favicon || process.env.DEFAULT_PREVIEW_IMG}" />
         <meta property="og:type" content="website" />
 
         <!-- Twitter Card -->
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="${url.title || url.longUrl}" />
-        <meta name="twitter:description" content="${url.description || ""}" />
-        <meta name="twitter:image" content="${url.favicon || process.env.DEFAULT_PREVIEW_IMG
-        }" />
+        <meta name="twitter:title" content="${urlData.title || urlData.longUrl}" />
+        <meta name="twitter:description" content="${urlData.description || ""}" />
+        <meta name="twitter:image" content="${urlData.favicon || process.env.DEFAULT_PREVIEW_IMG}" />
       </head>
       <body>
-        <p>Redirecting to ${url.longUrl}...</p>
+        <p>Redirecting to ${urlData.longUrl}...</p>
         <script>
           setTimeout(() => {
-            window.location.href = "${url.longUrl}";
+            window.location.href = "${urlData.longUrl}";
           }, 2000);
         </script>
       </body>
@@ -204,11 +170,10 @@ app.get("/:shortUrl", async (req, res) => {
     `);
     }
 
-    // return res.status(301).redirect(url.longUrl);
-
-    // ✅ Instead of redirecting, send users to frontend preview page
-    return res.redirect(`${process.env.FRONTEND_URL}/preview/${url.shortUrl}`);
+    // ✅ Send users to frontend preview page consistently
+    return res.redirect(`${process.env.FRONTEND_URL}/preview/${urlData.shortUrl}`);
   } catch (error) {
+    console.error("Redirect error:", error);
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });

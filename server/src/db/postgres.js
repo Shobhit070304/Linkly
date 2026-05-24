@@ -23,10 +23,13 @@ const connectDB = async () => {
     // Import models after connection
     const User = require("../models/user-model");
     const Url = require("../models/url-model");
+    const Click = require("../models/click-model");
     
     // Setup associations
     User.hasMany(Url, { foreignKey: 'userId', as: 'urls' });
     Url.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+    Url.hasMany(Click, { foreignKey: 'urlId', as: 'clickEvents', onDelete: 'CASCADE' });
+    Click.belongsTo(Url, { foreignKey: 'urlId', as: 'url' });
     
     // Sync all models
     await sequelize.sync({ alter: true });

@@ -21,35 +21,7 @@ module.exports.shortenUrl = async (req, res) => {
   }
 
   try {
-    // Check in DB first (since we cache by shortUrl, not longUrl)
-    const url = await Url.findOne({ where: { longUrl } });
-    if (url) {
-      const shortUrl = url.customShort || url.shortUrl;
-      
-      // Check if already cached
-      const cached = await redisClient.hget("urls", shortUrl);
-      if (cached) {
-        let parsedData;
-        try {
-          parsedData = typeof cached === 'string' ? JSON.parse(cached) : cached;
-        } catch (parseError) {
-          parsedData = { shortUrl, qrCode: null };
-        }
-        
-        return res.status(200).json({
-          status: true,
-          shortUrl: process.env.BACKEND_URL + shortUrl,
-          qrCode: parsedData.qrCode || url.qrCode,
-        });
-      }
-      
-      // Return from DB and cache
-      return res.status(200).json({
-        status: true,
-        shortUrl: process.env.BACKEND_URL + shortUrl,
-        qrCode: url.qrCode,
-      });
-    }
+    // We allow users to shorten the same longUrl multiple times to support different aliases or settings.
 
     // Generate new shortUrl
     let shortUrl;
@@ -68,7 +40,7 @@ module.exports.shortenUrl = async (req, res) => {
     // Check custom short availability
     if (customShort) {
       const isCustomShortAvailable = await Url.findOne({
-        where: { customShort },
+        where: { shortUrl: customShort },
       });
       if (isCustomShortAvailable) {
         return res.json({
