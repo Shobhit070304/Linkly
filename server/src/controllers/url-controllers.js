@@ -22,7 +22,7 @@ module.exports.shortenUrl = async (req, res) => {
 
   try {
     // Check in DB first (since we cache by shortUrl, not longUrl)
-    const url = await Url.findOne({ longUrl });
+    const url = await Url.findOne({ where: { longUrl } });
     if (url) {
       const shortUrl = url.customShort || url.shortUrl;
       
@@ -60,7 +60,7 @@ module.exports.shortenUrl = async (req, res) => {
       shortUrl = encodeBase62(id);
     }
 
-    const user = await User.findOne({ email: req.user.email });
+    const user = await User.findOne({ where: { email: req.user.email } });
     if (!user) {
       return res.status(404).json({ status: false, error: "User not found" });
     }
@@ -68,7 +68,7 @@ module.exports.shortenUrl = async (req, res) => {
     // Check custom short availability
     if (customShort) {
       const isCustomShortAvailable = await Url.findOne({
-        customShort,
+        where: { customShort },
       });
       if (isCustomShortAvailable) {
         return res.json({
@@ -100,15 +100,13 @@ module.exports.shortenUrl = async (req, res) => {
       customShort: customShort || "",
       shortUrl,
       longUrl,
-      user: user._id,
+      userId: user.id,
       clicks: 0,
       qrCode,
-      maxClicks: maxClicks || undefined,
-      expiresAt: expiresAt || undefined,
+      maxClicks: maxClicks || null,
+      expiresAt: expiresAt || null,
       ...meta,
     });
-    user.urls.push(newUrl._id);
-    await user.save();
 
     // Save in Redis using shortUrl as key (consistent with redirect logic)
     await redisClient.hset("urls", {
@@ -150,7 +148,7 @@ module.exports.originalUrl = async (req, res) => {
     if (cachedUrl) {
       return res.status(200).json({ status: true, longUrl: cachedUrl });
     } else {
-      const url = await Url.findOne({ shortUrl: shortUrl });
+      const url = await Url.findOne({ where: { shortUrl } });
       if (url) {
         // Cache the result for future requests
         await redisClient.hset("urls", {
@@ -171,7 +169,10 @@ module.exports.originalUrl = async (req, res) => {
 
 module.exports.getMyUrls = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.user.email }).populate("urls");
+    const user = await User.findOne({ 
+      where: { email: req.user.email },
+      include: [{ model: Url, as: 'urls' }]
+    });
     return res.status(200).json({ status: true, urls: user.urls });
   } catch (error) {
     return res
@@ -205,14 +206,13 @@ module.exports.deleteUrl = async (req, res) => {
     }
 
     // Find the URL
-    const url = await Url.findOne({ shortUrl });
+    const url = await Url.findOne({ where: { shortUrl } });
     if (!url) {
       return res.status(404).json({ status: false, error: "URL not found" });
     }
 
     // Delete from DB
-    await Url.deleteOne({ shortUrl });
-    await User.findByIdAndUpdate(url.user, { $pull: { urls: url._id } });
+    await Url.destroy({ where: { shortUrl } });
 
     return res
       .status(200)

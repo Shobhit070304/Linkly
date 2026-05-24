@@ -7,7 +7,7 @@ const verifyUser = require("../middlewares/auth");
 router.post("/login", verifyUser, async (req, res) => {
     const { name, email } = req.user;
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ where: { email } });
         if (user) {
             return res.status(200).json({ user });
         }

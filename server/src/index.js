@@ -4,7 +4,7 @@ const app = express();
 const cors = require("cors");
 const compression = require("compression");
 const helmet = require("helmet");
-const connectDB = require("./db/db.js");
+const { connectDB } = require("./db/postgres.js");
 const { getRedisClient } = require("./utils/redis-connection.js");
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
@@ -27,7 +27,7 @@ app.use(helmet());
 // Use compression for all responses
 app.use(compression());
 
-// Connect to MongoDB
+// Connect to PostgreSQL
 connectDB();
 
 //Routes
@@ -60,7 +60,7 @@ app.use("/api/user", userRoutes);
 app.get("/api/links/:shortCode", async (req, res) => {
   try {
     const { shortCode } = req.params;
-    const link = await Url.findOne({ shortUrl: shortCode });
+    const link = await Url.findOne({ where: { shortUrl: shortCode } });
 
     if (!link) {
       return res.status(404).json({ error: "Link not found" });
@@ -95,7 +95,7 @@ app.get("/:shortUrl", async (req, res) => {
 
     if (cachedUrl) {
       // Check DB for limits and expiration
-      const urlData = await Url.findOne({ shortUrl });
+      const urlData = await Url.findOne({ where: { shortUrl } });
 
       if (!urlData) {
         return res.status(404).json({ status: false, error: "URL not found" });
@@ -110,24 +110,24 @@ app.get("/:shortUrl", async (req, res) => {
       // If expired or click limit reached, delete from Redis and DB
       if (isExpired) {
         await redisClient.hdel("urls", shortUrl);
-        await Url.deleteOne({ shortUrl });
+        await Url.destroy({ where: { shortUrl } });
         return res.status(410).json({ status: false, error: "Link expired" });
       }
       if (isClickLimitReached) {
         await redisClient.hdel("urls", shortUrl);
-        await Url.deleteOne({ shortUrl });
+        await Url.destroy({ where: { shortUrl } });
         return res
           .status(410)
           .json({ status: false, error: "Click limit reached" });
       }
 
-      await Url.updateOne({ shortUrl }, { $inc: { clicks: 1 } });
+      await Url.update({ clicks: urlData.clicks + 1 }, { where: { shortUrl } });
 
       return res.status(301).redirect(cachedUrl);
     }
 
     // Not in cache, check DB
-    const url = await Url.findOne({ shortUrl });
+    const url = await Url.findOne({ where: { shortUrl } });
 
     if (!url) {
       return res.status(404).json({ status: false, error: "URL not found" });
@@ -141,13 +141,13 @@ app.get("/:shortUrl", async (req, res) => {
 
     if (isExpired) {
       await redisClient.hdel("urls", shortUrl);
-      await Url.deleteOne({ shortUrl });
+      await Url.destroy({ where: { shortUrl } });
       return res.status(410).json({ status: false, error: "Link expired" });
     }
 
     if (isClickLimitReached) {
       await redisClient.hdel("urls", shortUrl);
-      await Url.deleteOne({ shortUrl });
+      await Url.destroy({ where: { shortUrl } });
       // It should be go to the client side and show a message that the click limit has been reached
       return res
         .status(410)
@@ -158,7 +158,7 @@ app.get("/:shortUrl", async (req, res) => {
     await redisClient.hset("urls", { [shortUrl]: url.longUrl });
 
     // Increment click count
-    await url.updateOne({ $inc: { clicks: 1 } });
+    await Url.update({ clicks: url.clicks + 1 }, { where: { shortUrl } });
 
     // Detect if request is from a crawler bot
     const userAgent = req.headers["user-agent"] || "";

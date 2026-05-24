@@ -1,20 +1,68 @@
-const mongoose = require("mongoose");
+const { DataTypes } = require("sequelize");
+const { sequelize } = require("../db/postgres");
 
-const urlSchema = new mongoose.Schema({
-  customShort: { type: String, required: false },
-  longUrl: { type: String, required: true },
-  shortUrl: { type: String, required: true, unique: true },
-  createdAt: { type: Date, default: Date.now },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  clicks: { type: Number, default: 0 },
-  maxClicks: { type: Number },
-  expiresAt: { type: Date },
-  qrCode: { type: String },
-  title: String,
-  description: String,
-  favicon: String,
+const Url = sequelize.define("Url", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  customShort: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  longUrl: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  shortUrl: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id',
+    },
+  },
+  clicks: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  maxClicks: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  expiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  qrCode: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  favicon: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+}, {
+  tableName: 'urls',
+  timestamps: true,
 });
-
-const Url = mongoose.model("Url", urlSchema);
 
 module.exports = Url;
