@@ -1,249 +1,259 @@
-import {
-  ChartBarIcon,
-  CopyIcon,
-  QrCodeIcon,
-  TrashIcon,
-} from "lucide-react";
-import Background from "../components/Common/Background";
-import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
-import { useState, useEffect } from "react";
-import Navbar from "../components/Common/Navbar";
+import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
+import { AuthContext } from "../context/UserContext";
+import {
+  Link as LinkIcon,
+  Copy,
+  BarChart2,
+  Trash2,
+  ArrowRight,
+  QrCode,
+  AlertCircle
+} from "lucide-react";
 
 function Dashboard() {
   const [urls, setUrls] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { user } = useContext(AuthContext);
+
   const fetchUrls = async () => {
-    setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Authentication token missing. Please login again.");
-        return;
-      }
-
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/url/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      if (response.data && response.data.urls) {
-        setUrls(response.data.urls || []);
-      } else {
-        setUrls([]);
-      }
+      setUrls(response.data.urls || []);
     } catch (error) {
-      console.error("Error fetching URLs:", error);
-      toast.error("Failed to load your URLs. Please try again later.");
-      setUrls([]);
+      toast.error("Failed to load URLs");
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchUrls();
   }, []);
 
   const handleDelete = async (shortUrl) => {
+    if (!window.confirm("Are you sure you want to delete this link?")) return;
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Authentication token missing. Please login again.");
-        return;
-      }
-
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/url/delete`,
-        {
-          shortUrl: shortUrl,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { shortUrl },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       if (response.data && response.data.status) {
-        toast.success("URL deleted successfully");
+        toast.success("URL deleted");
         fetchUrls();
       } else {
         toast.error("Failed to delete URL");
       }
     } catch (error) {
-      console.error("Error deleting URL:", error);
-      toast.error("Failed to delete URL. Please try again later.");
+      toast.error("An error occurred while deleting");
     }
   };
 
-  return (
-    <>
-      <Background />
-      <Navbar />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-semibold text-white">
-            Your Shortened URLs
-          </h1>
-          <Link
-            to="/home"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-all cursor-pointer shadow-sm"
-          >
-            + Create New
-          </Link>
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
+
+  const totalClicks = urls.reduce((acc, curr) => acc + curr.clicks, 0);
+
+  // Partition links into Active and Expired
+  const now = new Date();
+  const isExpired = (url) => {
+    const expiredByDate = url.expiresAt && new Date(url.expiresAt) < now;
+    const expiredByClicks = url.maxClicks && url.clicks >= url.maxClicks;
+    return expiredByDate || expiredByClicks;
+  };
+
+  const activeUrls = urls.filter(url => !isExpired(url));
+  const expiredUrls = urls.filter(url => isExpired(url));
+
+  const renderUrlTable = (urlList, isExpiredSection = false) => {
+    if (urlList.length === 0) {
+      return (
+        <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+          <LinkIcon className="w-8 h-8 mx-auto mb-3 opacity-50" />
+          <p className="text-sm">No links in this category.</p>
         </div>
+      );
+    }
 
-        {loading && (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-          </div>
-        )}
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-gray-50/50 dark:bg-white/5 text-gray-500 dark:text-gray-400 text-xs">
+            <tr>
+              <th className="px-6 py-4 font-medium">Link Details</th>
+              <th className="px-6 py-4 font-medium hidden sm:table-cell">Target URL</th>
+              <th className="px-6 py-4 font-medium">Clicks</th>
+              {isExpiredSection && <th className="px-6 py-4 font-medium">Status</th>}
+              <th className="px-6 py-4 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+            {urlList.map((url) => {
+              const shortLink = `${import.meta.env.VITE_BACKEND_URL}/${url.shortUrl}`;
+              return (
+                <tr key={url.id || url.shortUrl} className={`hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group ${isExpiredSection ? 'opacity-70' : ''}`}>
+                  
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      {url.favicon ? (
+                        <img src={url.favicon} alt="" className={`w-6 h-6 rounded-sm bg-white ${isExpiredSection && 'grayscale'}`} />
+                      ) : (
+                        <div className="w-6 h-6 rounded-sm bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
+                          <LinkIcon className="w-3 h-3 text-gray-500" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                          <span className={isExpiredSection ? "line-through text-gray-500" : ""}>
+                            {url.customShort || url.shortUrl}
+                          </span>
+                          {!isExpiredSection && (
+                            <button onClick={() => copyToClipboard(shortLink)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-black dark:hover:text-white transition-all">
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        <a href={isExpiredSection ? "#" : shortLink} target={isExpiredSection ? "_self" : "_blank"} rel="noreferrer" className="text-xs text-blue-500 hover:underline">
+                          {import.meta.env.VITE_BACKEND_URL ? import.meta.env.VITE_BACKEND_URL.replace(/^https?:\/\//, '') + '/' : 'linkly.com/'}{url.customShort || url.shortUrl}
+                        </a>
+                      </div>
+                    </div>
+                  </td>
 
-        <div className="bg-white/5 backdrop-blur-lg rounded-xl overflow-hidden border border-white/10">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-white/10 border-b border-white/10 text-gray-300 font-medium text-sm">
-            <div className="col-span-2">Name</div>
-            <div className="col-span-4">Original URL</div>
-            <div className="col-span-3">Short URL</div>
-            <div className="col-span-1 text-center">Clicks</div>
-            <div className="col-span-2 text-right">Actions</div>
-          </div>
-
-          {/* Table Body */}
-          <div>
-            {urls.map((url) => (
-              <div
-                key={url._id}
-                className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-700/40 hover:bg-gray-700/20 transition-all"
-              >
-                {/* Name / Alias */}
-                <div className="col-span-2 text-white font-medium truncate flex items-center gap-2">
-                  {url.customShort || "Untitled"}
-                  {url.maxClicks === 1 && (
-                    <span className="px-2 py-0.5 text-xs bg-red-500/20 text-red-400 rounded-full">
-                      One-Time
-                    </span>
-                  )}
-                </div>
-
-                {/* Original URL */}
-                {/* <div className="col-span-4 text-gray-400 truncate flex items-center gap-2">
-                  <CopyIcon
-                    onClick={() => navigator.clipboard.writeText(url.longUrl)}
-                    className="h-4 w-4 hover:text-indigo-400 cursor-pointer"
-                  />
-                  <a
-                    href={url.longUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-indigo-400 text-sm hover:underline"
-                  >
-                    {url.longUrl}
-                  </a>
-                </div> */}
-
-                {/* Original URL with preview */}
-                <div className="col-span-4 flex items-center gap-3">
-                  {url.favicon && (
-                    <img
-                      src={url.favicon}
-                      alt="favicon"
-                      className="w-5 h-5 rounded-sm"
-                    />
-                  )}
-                  <div className="truncate">
-                    <a
-                      href={url.longUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white hover:text-indigo-400 text-sm font-medium hover:underline truncate block"
-                    >
-                      {url.title || url.longUrl}
+                  <td className="px-6 py-4 hidden sm:table-cell max-w-xs">
+                    <a href={url.longUrl} target="_blank" rel="noreferrer" className="text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white truncate block transition-colors">
+                      {url.longUrl}
                     </a>
-                    {url.description && (
-                      <p className="text-gray-400 text-xs truncate">
-                        {url.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  </td>
 
-                {/* Short URL */}
-                <div className="col-span-3 text-gray-400 truncate flex items-center gap-2">
-                  <CopyIcon
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        `${import.meta.env.VITE_BACKEND_URL}/${url.shortUrl}`
-                      )
-                    }
-                    className="h-4 w-4 hover:text-indigo-400 cursor-pointer"
-                  />
-                  <a
-                    href={`${import.meta.env.VITE_BACKEND_URL}/${url.shortUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-indigo-400 text-sm hover:underline"
-                  >
-                    {import.meta.env.VITE_BACKEND_URL + "/" + url.shortUrl}
-                  </a>
-                </div>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-xs font-medium text-gray-900 dark:text-white">
+                      {url.clicks} {url.maxClicks ? `/ ${url.maxClicks}` : ''} <BarChart2 className="w-3 h-3 text-gray-500" />
+                    </span>
+                  </td>
 
-                {/* Clicks */}
-                <div className="col-span-1 text-center text-white flex items-center justify-center gap-1">
-                  <ChartBarIcon className="h-4 w-4 text-indigo-400" />
-                  <span>{url.clicks}</span>
-                </div>
+                  {isExpiredSection && (
+                     <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-[10px] font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
+                           <AlertCircle className="w-3 h-3" />
+                           {url.maxClicks && url.clicks >= url.maxClicks ? 'Limit Reached' : 'Expired'}
+                        </span>
+                     </td>
+                  )}
 
-                {/* Actions */}
-                <div className="col-span-2 flex items-center justify-end gap-3">
-                  {/* QR Download */}
-                  <button
-                    onClick={() => {
-                      const a = document.createElement("a");
-                      a.href = url.qrCode;
-                      a.download = `${url.customShort || url.shortUrl}-qr.png`;
-                      a.click();
-                    }}
-                    className="text-gray-400 cursor-pointer hover:text-blue-400 transition-colors"
-                    title="Download QR"
-                  >
-                    <QrCodeIcon className="h-5 w-5" />
-                  </button>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3">
+                      {!isExpiredSection && (
+                        <button onClick={() => {
+                          const a = document.createElement("a");
+                          a.href = url.qrCode;
+                          a.download = `${url.shortUrl}-qr.png`;
+                          a.click();
+                        }} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Download QR">
+                          <QrCode className="w-4 h-4" />
+                        </button>
+                      )}
+                      
+                      <Link to={`/analytics/${url.shortUrl}`} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Analytics">
+                        <BarChart2 className="w-4 h-4" />
+                      </Link>
 
-                  {/* Delete */}
-                  <button
-                    onClick={() => handleDelete(url.shortUrl)}
-                    className="text-gray-400 cursor-pointer hover:text-red-400 transition-colors"
-                    title="Delete URL"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-            ))}
+                      <button onClick={() => handleDelete(url.shortUrl)} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex-1 p-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black dark:border-white"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto p-4 md:p-8 font-sans">
+      {/* Header */}
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">Overview</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Manage your links and view performance.</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+        <div className="glass-card p-6 rounded-xl relative overflow-hidden group">
+          <div className="flex justify-between items-start mb-4">
+             <div className="p-2 bg-gray-100 dark:bg-white/5 rounded-md">
+                <LinkIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+             </div>
+             <span className="text-xs font-medium text-gray-500 uppercase tracking-widest">Total Links</span>
           </div>
-
-          {/* Empty State */}
-          {urls.length === 0 && (
-            <div className="p-12 text-center text-gray-400">
-              <p className="mb-2">You haven't created any short URLs yet.</p>
-              <Link
-                to="/home"
-                className="text-indigo-400 hover:text-indigo-300 font-medium"
-              >
-                Create your first short URL →
-              </Link>
-            </div>
-          )}
+          <h2 className="text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">{urls.length}</h2>
+        </div>
+        
+        <div className="glass-card p-6 rounded-xl relative overflow-hidden">
+          <div className="flex justify-between items-start mb-4">
+             <div className="p-2 bg-gray-100 dark:bg-white/5 rounded-md">
+                <BarChart2 className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+             </div>
+             <span className="text-xs font-medium text-gray-500 uppercase tracking-widest">Total Clicks</span>
+          </div>
+          <h2 className="text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">{totalClicks}</h2>
         </div>
       </div>
-    </>
+
+      {/* Active Links Table */}
+      <div className="glass-card rounded-xl overflow-hidden mb-8">
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Active Links</h3>
+            <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-xs font-medium text-gray-600 dark:text-gray-300">
+              {activeUrls.length}
+            </span>
+          </div>
+          <Link to="/home" className="text-xs font-medium px-3 py-1.5 rounded-md bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black transition-colors flex items-center gap-1.5">
+             Create Link <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+        {renderUrlTable(activeUrls, false)}
+      </div>
+
+      {/* Expired Links Table */}
+      {expiredUrls.length > 0 && (
+        <div className="glass-card rounded-xl overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Expired & Limit Reached</h3>
+              <span className="px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-xs font-medium text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/50">
+                {expiredUrls.length}
+              </span>
+            </div>
+          </div>
+          {renderUrlTable(expiredUrls, true)}
+        </div>
+      )}
+
+    </div>
   );
 }
 

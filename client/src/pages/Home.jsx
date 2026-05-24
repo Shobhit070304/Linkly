@@ -4,7 +4,6 @@ import Footer from "../components/Common/Footer";
 import UrlShortner from "../components/Home/UrlShortner";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import FuturisticBackground from "../components/Common/Background";
 
 const Home = () => {
   return (
@@ -47,8 +46,6 @@ const Home = () => {
           </button>
         )}
       />
-      {/* Futuristic 3D Background */}
-      <FuturisticBackground />
       {/* Content Layer */}
       <div className="relative z-10">
         <Navbar />
