@@ -84,6 +84,14 @@ module.exports.shortenUrl = async (req, res) => {
     await redisClient.hset("urls", {
       [shortUrl]: longUrl, // Store the actual long URL for redirect
     });
+    
+    // Cache URL metadata details for the redirect path
+    await redisClient.hset("url_metadata", {
+      [shortUrl]: JSON.stringify(newUrl.toJSON()),
+    });
+
+    // Seed click counter in Redis
+    await redisClient.set(`clicks:${shortUrl}`, 0);
 
     return res.status(200).json({
       status: true,
@@ -171,11 +179,10 @@ module.exports.deleteUrl = async (req, res) => {
   }
 
   try {
-    // Remove from Redis if cached
-    const cachedUrl = await redisClient.hget("urls", shortUrl);
-    if (cachedUrl) {
-      await redisClient.hdel("urls", shortUrl);
-    }
+    // Remove associated keys from Redis if cached
+    await redisClient.hdel("urls", shortUrl);
+    await redisClient.hdel("url_metadata", shortUrl);
+    await redisClient.del(`clicks:${shortUrl}`);
 
     // Find the URL
     const url = await Url.findOne({ where: { shortUrl } });

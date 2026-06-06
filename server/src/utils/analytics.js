@@ -1,6 +1,7 @@
 const geoip = require("geoip-lite");
 const UAParser = require("ua-parser-js");
 const Click = require("../models/click-model");
+const Url = require("../models/url-model");
 
 const logClick = async (urlId, ipAddress, userAgent, referrer) => {
   try {
@@ -24,6 +25,7 @@ const logClick = async (urlId, ipAddress, userAgent, referrer) => {
     if (deviceType === "mobile") deviceType = "Mobile";
     if (deviceType === "tablet") deviceType = "Tablet";
 
+    // 1. Create the click analytics record
     await Click.create({
       urlId,
       ipAddress,
@@ -34,6 +36,9 @@ const logClick = async (urlId, ipAddress, userAgent, referrer) => {
       os: result.os.name || "Unknown",
       referrer,
     });
+
+    // 2. Asynchronously update the cumulative click counter in PostgreSQL
+    await Url.increment("clicks", { by: 1, where: { id: urlId } });
   } catch (error) {
     console.error("Error logging click analytics:", error);
   }

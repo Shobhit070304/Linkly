@@ -100,31 +100,50 @@ app.get("/:shortUrl", async (req, res) => {
   const { shortUrl } = req.params;
 
   try {
-    // We always check the DB for accurate limits & expiration
-    const urlData = await Url.findOne({ where: { shortUrl } });
+    // 1. Try fetching cached URL metadata from Redis first
+    const cachedData = await redisClient.hget("url_metadata", shortUrl);
+    let urlData;
 
-    if (!urlData) {
-      return res.status(404).json({ status: false, error: "URL not found" });
+    if (cachedData) {
+      // Deserialize the cached Sequelize model JSON
+      urlData = typeof cachedData === "string" ? JSON.parse(cachedData) : cachedData;
+    } else {
+      // Cache Miss: Query PostgreSQL database
+      const dbUrl = await Url.findOne({ where: { shortUrl } });
+      if (!dbUrl) {
+        return res.status(404).json({ status: false, error: "URL not found" });
+      }
+      urlData = dbUrl.toJSON();
+
+      // Write to Redis to prevent future database reads
+      await redisClient.hset("url_metadata", { [shortUrl]: JSON.stringify(urlData) });
+      await redisClient.hset("urls", { [shortUrl]: urlData.longUrl });
     }
 
-    const now = new Date();
-    let isExpired = urlData.expiresAt && now > urlData.expiresAt;
-    let isClickLimitReached = urlData.maxClicks && urlData.clicks >= urlData.maxClicks;
+    // 2. Fetch or seed the click counter in Redis
+    let cachedClicks = await redisClient.get(`clicks:${shortUrl}`);
+    if (cachedClicks === null || cachedClicks === undefined) {
+      await redisClient.set(`clicks:${shortUrl}`, urlData.clicks);
+      cachedClicks = urlData.clicks;
+    }
+    
+    // Increment the click counter in Redis
+    const clicks = await redisClient.incr(`clicks:${shortUrl}`);
 
-    // If expired or click limit reached, ONLY delete from Redis. Do NOT destroy DB record to preserve analytics!
+    // 3. Evaluate limits and expiration policies
+    const now = new Date();
+    let isExpired = urlData.expiresAt && now > new Date(urlData.expiresAt);
+    let isClickLimitReached = urlData.maxClicks && clicks > urlData.maxClicks;
+
+    // If expired or click limit reached, purge cache and redirect to preview/error
     if (isExpired || isClickLimitReached) {
+      await redisClient.hdel("url_metadata", shortUrl);
       await redisClient.hdel("urls", shortUrl);
-      // We still redirect to the preview page, which will call the API and display an "Expired" message nicely to the user.
+      await redisClient.del(`clicks:${shortUrl}`);
       return res.redirect(`${process.env.FRONTEND_URL}/preview/${urlData.shortUrl}`);
     }
 
-    // Cache the longUrl in Redis for quick originalUrl retrieval lookups
-    await redisClient.hset("urls", { [shortUrl]: urlData.longUrl });
-
-    // Increment click count
-    await Url.update({ clicks: urlData.clicks + 1 }, { where: { shortUrl } });
-
-    // Asynchronously log analytics via BullMQ
+    // 4. Asynchronously log analytics and sync click count to DB via BullMQ
     analyticsQueue.add("log-click", {
       urlId: urlData.id,
       ipAddress: req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip,
