@@ -1,4 +1,5 @@
 const { getRedisClient } = require("../utils/redis-connection");
+const { URL } = require("url");
 const encodeBase62 = require("../utils/helper");
 const Url = require("../models/url-model");
 const User = require("../models/user-model");
@@ -6,13 +7,6 @@ const QRCode = require("qrcode");
 const ogs = require("open-graph-scraper");
 
 module.exports.shortenUrl = async (req, res) => {
-  const redisClient = getRedisClient();
-  if (!redisClient) {
-    return res
-      .status(500)
-      .json({ status: false, error: "Redis client not initialized" });
-  }
-
   const { longUrl, customShort, maxClicks, expiresAt } = req.body;
   if (!longUrl) {
     return res
@@ -21,7 +15,35 @@ module.exports.shortenUrl = async (req, res) => {
   }
 
   try {
-    // We allow users to shorten the same longUrl multiple times to support different aliases or settings.
+    const redisClient = getRedisClient();
+
+    // Validate URL format and protocol
+    try {
+      const parsedUrl = new URL(longUrl);
+      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+        return res
+          .status(400)
+          .json({ status: false, error: "Only http and https protocols are supported" });
+      }
+    } catch (urlError) {
+      return res
+        .status(400)
+        .json({ status: false, error: "Invalid URL format" });
+    }
+
+    // Check custom short availability first to prevent database/counter race conditions
+    if (customShort) {
+      const isCustomShortAvailable = await Url.findOne({
+        where: { shortUrl: customShort },
+      });
+      if (isCustomShortAvailable) {
+        return res.status(409).json({
+          status: false,
+          error: "Custom short URL not available. Use a different one.",
+          message: "Custom short URL not available. Use a different one.",
+        });
+      }
+    }
 
     // Generate new shortUrl
     let shortUrl;
@@ -35,19 +57,6 @@ module.exports.shortenUrl = async (req, res) => {
     const user = await User.findOne({ where: { email: req.user.email } });
     if (!user) {
       return res.status(404).json({ status: false, error: "User not found" });
-    }
-
-    // Check custom short availability
-    if (customShort) {
-      const isCustomShortAvailable = await Url.findOne({
-        where: { shortUrl: customShort },
-      });
-      if (isCustomShortAvailable) {
-        return res.json({
-          status: false,
-          message: "Custom short URL not available. Use a different one.",
-        });
-      }
     }
 
     // Fetch meta info
@@ -99,6 +108,18 @@ module.exports.shortenUrl = async (req, res) => {
       qrCode,
     });
   } catch (error) {
+    if (error.message === "Redis client not initialized") {
+      return res
+        .status(500)
+        .json({ status: false, error: "Redis client not initialized" });
+    }
+    if (error.name === "SequelizeUniqueConstraintError") {
+      return res.status(409).json({
+        status: false,
+        error: "Custom short URL not available. Use a different one.",
+        message: "Custom short URL not available. Use a different one.",
+      });
+    }
     console.error("Shorten error:", error);
     return res
       .status(500)
@@ -107,14 +128,6 @@ module.exports.shortenUrl = async (req, res) => {
 };
 
 module.exports.originalUrl = async (req, res) => {
-  //Redis Client Connection
-  const redisClient = getRedisClient();
-  if (!redisClient) {
-    return res
-      .status(500)
-      .json({ status: false, error: "Redis client not initialized" });
-  }
-
   //Short URL
   const { shortUrl } = req.body;
   if (!shortUrl) {
@@ -123,6 +136,9 @@ module.exports.originalUrl = async (req, res) => {
       .json({ status: false, error: "Short URL is required" });
   }
   try {
+    //Redis Client Connection
+    const redisClient = getRedisClient();
+
     //Check for url in redis cache
     const cachedUrl = await redisClient.hget("urls", shortUrl);
     if (cachedUrl) {
@@ -140,6 +156,11 @@ module.exports.originalUrl = async (req, res) => {
       }
     }
   } catch (error) {
+    if (error.message === "Redis client not initialized") {
+      return res
+        .status(500)
+        .json({ status: false, error: "Redis client not initialized" });
+    }
     console.error("Original URL error:", error);
     return res
       .status(500)
@@ -162,14 +183,6 @@ module.exports.getMyUrls = async (req, res) => {
 };
 
 module.exports.deleteUrl = async (req, res) => {
-  //Redis Client Connection
-  const redisClient = getRedisClient();
-  if (!redisClient) {
-    return res
-      .status(500)
-      .json({ status: false, error: "Redis client not initialized" });
-  }
-
   //Short URL
   const { shortUrl } = req.body;
   if (!shortUrl) {
@@ -179,6 +192,9 @@ module.exports.deleteUrl = async (req, res) => {
   }
 
   try {
+    //Redis Client Connection
+    const redisClient = getRedisClient();
+
     // Remove associated keys from Redis if cached
     await redisClient.hdel("urls", shortUrl);
     await redisClient.hdel("url_metadata", shortUrl);
@@ -197,6 +213,11 @@ module.exports.deleteUrl = async (req, res) => {
       .status(200)
       .json({ status: true, message: "URL deleted successfully" });
   } catch (error) {
+    if (error.message === "Redis client not initialized") {
+      return res
+        .status(500)
+        .json({ status: false, error: "Redis client not initialized" });
+    }
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });

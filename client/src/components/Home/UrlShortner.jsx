@@ -40,6 +40,17 @@ function UrlShortner() {
       return;
     }
 
+    try {
+      const parsedUrl = new URL(longUrl);
+      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+        toast.error("Only http:// and https:// protocols are supported");
+        return;
+      }
+    } catch (err) {
+      toast.error("Please enter a valid absolute URL (e.g., https://example.com)");
+      return;
+    }
+
     setGeneratedShortUrl("");
     setLoadingShortUrl(true);
 

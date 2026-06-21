@@ -90,16 +90,10 @@ app.get("/api/links/:shortCode", async (req, res) => {
 
 // Redirect to Long URL (wildcard route - must be after all specific routes)
 app.get("/:shortUrl", async (req, res) => {
-  const redisClient = getRedisClient();
-  if (!redisClient) {
-    return res
-      .status(500)
-      .json({ status: false, error: "Redis client not initialized" });
-  }
-
   const { shortUrl } = req.params;
 
   try {
+    const redisClient = getRedisClient();
     // 1. Try fetching cached URL metadata from Redis first
     const cachedData = await redisClient.hget("url_metadata", shortUrl);
     let urlData;
@@ -192,6 +186,11 @@ app.get("/:shortUrl", async (req, res) => {
     // ✅ Send users to frontend preview page consistently
     return res.redirect(`${process.env.FRONTEND_URL}/preview/${urlData.shortUrl}`);
   } catch (error) {
+    if (error.message === "Redis client not initialized") {
+      return res
+        .status(500)
+        .json({ status: false, error: "Redis client not initialized" });
+    }
     console.error("Redirect error:", error);
     return res
       .status(500)

@@ -31,7 +31,7 @@ async function connectToRedis(retries = MAX_RETRIES) {
 
 function getRedisClient() {
     if (!redisClient) {
-        process.exit(1);
+        throw new Error('Redis client not initialized');
     }
     return redisClient;
 }
