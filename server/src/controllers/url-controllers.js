@@ -139,22 +139,55 @@ module.exports.originalUrl = async (req, res) => {
     //Redis Client Connection
     const redisClient = getRedisClient();
 
-    //Check for url in redis cache
-    const cachedUrl = await redisClient.hget("urls", shortUrl);
-    if (cachedUrl) {
-      return res.status(200).json({ status: true, longUrl: cachedUrl });
+    let urlData;
+    // 1. Fetch metadata from Redis first
+    const cachedData = await redisClient.hget("url_metadata", shortUrl);
+    if (cachedData) {
+      urlData = typeof cachedData === "string" ? JSON.parse(cachedData) : cachedData;
     } else {
-      const url = await Url.findOne({ where: { shortUrl } });
-      if (url) {
-        // Cache the result for future requests
-        await redisClient.hset("urls", {
-          [url.shortUrl]: url.longUrl,
-        });
-        return res.status(200).json({ status: true, longUrl: url.longUrl });
-      } else {
+      // Cache miss: Query Postgres DB
+      const dbUrl = await Url.findOne({ where: { shortUrl } });
+      if (!dbUrl) {
         return res.status(404).json({ status: false, error: "URL not found" });
       }
+      urlData = dbUrl.toJSON();
+
+      // Write to Redis to prevent future database reads
+      await redisClient.hset("url_metadata", { [shortUrl]: JSON.stringify(urlData) });
+      await redisClient.hset("urls", { [shortUrl]: urlData.longUrl });
     }
+
+    // 2. Fetch or seed the click counter in Redis
+    let cachedClicks = await redisClient.get(`clicks:${shortUrl}`);
+    if (cachedClicks === null || cachedClicks === undefined) {
+      // Fetch latest clicks directly from Postgres DB to prevent desync
+      const freshUrl = await Url.findOne({
+        where: { shortUrl },
+        attributes: ["clicks"],
+      });
+      const dbClicks = freshUrl ? freshUrl.clicks : 0;
+      await redisClient.set(`clicks:${shortUrl}`, dbClicks);
+      cachedClicks = dbClicks;
+    }
+
+    // 3. Evaluate limits and expiration policies
+    const now = new Date();
+    let isExpired = urlData.expiresAt && now > new Date(urlData.expiresAt);
+    let isClickLimitReached = urlData.maxClicks && Number(cachedClicks) > urlData.maxClicks;
+
+    // If expired or click limit reached, purge cache and return error
+    if (isExpired || isClickLimitReached) {
+      await redisClient.hdel("url_metadata", shortUrl);
+      await redisClient.hdel("urls", shortUrl);
+      await redisClient.del(`clicks:${shortUrl}`);
+      return res.status(403).json({
+        status: false,
+        error: "URL has expired or click limit has been reached.",
+        message: "URL has expired or click limit has been reached.",
+      });
+    }
+
+    return res.status(200).json({ status: true, longUrl: urlData.longUrl });
   } catch (error) {
     if (error.message === "Redis client not initialized") {
       return res
@@ -195,16 +228,31 @@ module.exports.deleteUrl = async (req, res) => {
     //Redis Client Connection
     const redisClient = getRedisClient();
 
-    // Remove associated keys from Redis if cached
-    await redisClient.hdel("urls", shortUrl);
-    await redisClient.hdel("url_metadata", shortUrl);
-    await redisClient.del(`clicks:${shortUrl}`);
+    // Find the logged-in user to verify ownership
+    const user = await User.findOne({ where: { email: req.user.email } });
+    if (!user) {
+      return res.status(404).json({ status: false, error: "User not found" });
+    }
 
     // Find the URL
     const url = await Url.findOne({ where: { shortUrl } });
     if (!url) {
       return res.status(404).json({ status: false, error: "URL not found" });
     }
+
+    // Check ownership
+    if (url.userId !== user.id) {
+      return res.status(403).json({
+        status: false,
+        error: "Unauthorized: You do not own this URL",
+        message: "Unauthorized: You do not own this URL",
+      });
+    }
+
+    // Remove associated keys from Redis if cached
+    await redisClient.hdel("urls", shortUrl);
+    await redisClient.hdel("url_metadata", shortUrl);
+    await redisClient.del(`clicks:${shortUrl}`);
 
     // Delete from DB
     await Url.destroy({ where: { shortUrl } });

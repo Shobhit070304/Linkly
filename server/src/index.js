@@ -117,8 +117,14 @@ app.get("/:shortUrl", async (req, res) => {
     // 2. Fetch or seed the click counter in Redis
     let cachedClicks = await redisClient.get(`clicks:${shortUrl}`);
     if (cachedClicks === null || cachedClicks === undefined) {
-      await redisClient.set(`clicks:${shortUrl}`, urlData.clicks);
-      cachedClicks = urlData.clicks;
+      // Fetch latest clicks directly from Postgres DB to prevent desync
+      const freshUrl = await Url.findOne({
+        where: { shortUrl },
+        attributes: ["clicks"],
+      });
+      const dbClicks = freshUrl ? freshUrl.clicks : 0;
+      await redisClient.set(`clicks:${shortUrl}`, dbClicks);
+      cachedClicks = dbClicks;
     }
     
     // Increment the click counter in Redis
