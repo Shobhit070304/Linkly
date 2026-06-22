@@ -2,7 +2,7 @@ import React from "react";
 import Navbar from "../components/Common/Navbar";
 import Footer from "../components/Common/Footer";
 import UrlShortner from "../components/Home/UrlShortner";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const Home = () => {
@@ -20,7 +20,7 @@ const Home = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        transition:Bounce
+        transition={Bounce}
         toastClassName="!bg-gray-800/95 !backdrop-blur-sm !border !border-gray-700 !shadow-lg !rounded-xl !p-4 !text-sm"
         bodyClassName="!p-0 !m-0"
         progressClassName="!bg-gradient-to-r !from-purple-500 !to-pink-500"

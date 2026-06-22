@@ -207,6 +207,9 @@ module.exports.getMyUrls = async (req, res) => {
       where: { email: req.user.email },
       include: [{ model: Url, as: 'urls' }]
     });
+    if (!user) {
+      return res.status(404).json({ status: false, error: "User not found" });
+    }
     return res.status(200).json({ status: true, urls: user.urls });
   } catch (error) {
     return res

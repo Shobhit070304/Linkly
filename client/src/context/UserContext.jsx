@@ -40,10 +40,7 @@ const UserContext = ({ children }) => {
       try {
         await axios.post(
           `${import.meta.env.VITE_BASE_URL}/user/login`,
-          {
-            name: userInfo.name,
-            email: userInfo.email,
-          },
+          {}, // Server reads from req.user (Firebase token), body is not used
           {
             headers: {
               Authorization: `Bearer ${userData.accessToken || ""}`,

@@ -5,6 +5,7 @@ export default function PreviewPage() {
   const { shortCode } = useParams();
   const [link, setLink] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     const fetchLink = async () => {
@@ -22,6 +23,24 @@ export default function PreviewPage() {
     };
     fetchLink();
   }, [shortCode]);
+
+  // Start redirect countdown only once the link is loaded
+  useEffect(() => {
+    if (!link?.longUrl) return;
+
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          window.location.href = link.longUrl;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [link]);
 
   if (loading) {
     return (
@@ -62,8 +81,11 @@ export default function PreviewPage() {
           Continue to Site
         </a>
         <p className="text-gray-500 text-xs mt-4">
-          via Linkly 🔗 Smart Preview
+          {countdown > 0
+            ? `Redirecting in ${countdown}s...`
+            : "Redirecting now..."}
         </p>
+        <p className="text-gray-600 text-xs mt-1">via Linkly 🔗 Smart Preview</p>
       </div>
     </div>
   );

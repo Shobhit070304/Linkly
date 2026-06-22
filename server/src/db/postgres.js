@@ -31,8 +31,9 @@ const connectDB = async () => {
     Url.hasMany(Click, { foreignKey: 'urlId', as: 'clickEvents', onDelete: 'CASCADE' });
     Click.belongsTo(Url, { foreignKey: 'urlId', as: 'url' });
     
-    // Sync all models
-    await sequelize.sync({ alter: true });
+    // Sync all models — only creates tables if they don't exist, never alters existing schema.
+    // WARNING: Schema changes must be applied manually via raw SQL migrations.
+    await sequelize.sync({ alter: false });
     console.log('✅ Database synchronized');
   } catch (error) {
     console.error('❌ PostgreSQL connection failed:', error.message);

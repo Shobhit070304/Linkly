@@ -28,8 +28,22 @@ const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Determine if dark mode is active to swap colors
-  const isDark = document.documentElement.classList.contains("dark");
+  // Reactive dark mode — updates if user toggles theme after page load
+  const [isDark, setIsDark] = useState(
+    document.documentElement.classList.contains("dark")
+  );
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
   const currentColors = isDark ? DARK_COLORS : COLORS;
 
   useEffect(() => {
