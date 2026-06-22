@@ -51,8 +51,8 @@ const Analytics = () => {
       try {
         const token = localStorage.getItem("token");
         const endpoint = shortCode
-          ? `${import.meta.env.VITE_BACKEND_URL}/api/url/analytics/${shortCode}`
-          : `${import.meta.env.VITE_BACKEND_URL}/api/url/analytics/me`;
+          ? `${import.meta.env.VITE_BASE_URL}/url/analytics/${shortCode}`
+          : `${import.meta.env.VITE_BASE_URL}/url/analytics/me`;
           
         const response = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` },

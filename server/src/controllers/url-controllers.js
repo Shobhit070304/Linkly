@@ -73,7 +73,7 @@ module.exports.shortenUrl = async (req, res) => {
     }
 
     // Generate QR
-    const fullShortUrl = process.env.BACKEND_URL + shortUrl;
+    const fullShortUrl = `${process.env.FRONTEND_URL}/preview/${shortUrl}`;
     const qrCode = await QRCode.toDataURL(fullShortUrl);
 
     // Save in DB
@@ -102,7 +102,7 @@ module.exports.shortenUrl = async (req, res) => {
     // Seed click counter in Redis
     await redisClient.set(`clicks:${shortUrl}`, 0);
 
-    return res.status(200).json({
+    return res.status(201).json({
       status: true,
       shortUrl: process.env.BACKEND_URL + shortUrl,
       qrCode,
@@ -129,7 +129,8 @@ module.exports.shortenUrl = async (req, res) => {
 
 module.exports.originalUrl = async (req, res) => {
   //Short URL
-  const { shortUrl } = req.body;
+  const { shortCode } = req.params;
+  const shortUrl = shortCode;
   if (!shortUrl) {
     return res
       .status(400)
@@ -203,15 +204,42 @@ module.exports.originalUrl = async (req, res) => {
 
 module.exports.getMyUrls = async (req, res) => {
   try {
-    const user = await User.findOne({ 
-      where: { email: req.user.email },
-      include: [{ model: Url, as: 'urls' }]
-    });
+    const user = await User.findOne({ where: { email: req.user.email } });
     if (!user) {
       return res.status(404).json({ status: false, error: "User not found" });
     }
-    return res.status(200).json({ status: true, urls: user.urls });
+
+    let page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    
+    const count = await Url.count({ where: { userId: user.id } });
+    const totalPages = Math.ceil(count / limit) || 1;
+    
+    if (page > totalPages) {
+      page = totalPages;
+    }
+    const offset = Math.max(0, (page - 1) * limit);
+
+    const urls = await Url.findAll({
+      where: { userId: user.id },
+      limit,
+      offset,
+      order: [["createdAt", "DESC"]],
+    });
+
+    const totalClicksResult = await Url.sum('clicks', { where: { userId: user.id } });
+    const totalClicks = totalClicksResult || 0;
+
+    return res.status(200).json({ 
+      status: true, 
+      urls,
+      totalLinks: count,
+      totalClicks,
+      totalPages,
+      currentPage: page
+    });
   } catch (error) {
+    console.error("Get my URLs error:", error);
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });
@@ -220,7 +248,7 @@ module.exports.getMyUrls = async (req, res) => {
 
 module.exports.deleteUrl = async (req, res) => {
   //Short URL
-  const { shortUrl } = req.body;
+  const { shortUrl } = req.params;
   if (!shortUrl) {
     return res
       .status(400)

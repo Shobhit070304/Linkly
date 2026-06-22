@@ -10,13 +10,13 @@ const { getAnalytics, getGlobalAnalytics } = require("../controllers/analytics-c
 router.post("/shorten", verifyUser, shortenUrl);
 
 // Redirect to Long URL
-router.post("/original", verifyUser, originalUrl);
+router.get("/original/:shortCode", verifyUser, originalUrl);
 
 // Get all URLs
 router.get("/me", verifyUser, getMyUrls);
 
 // Delete URL
-router.post("/delete", verifyUser, deleteUrl);
+router.delete("/:shortUrl", verifyUser, deleteUrl);
 
 // Get Global Analytics
 router.get("/analytics/me", verifyUser, getGlobalAnalytics);

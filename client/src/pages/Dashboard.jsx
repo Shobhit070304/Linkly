@@ -16,16 +16,25 @@ import {
 function Dashboard() {
   const [urls, setUrls] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalLinks, setTotalLinks] = useState(0);
+  const [globalClicks, setGlobalClicks] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
   const { user } = useContext(AuthContext);
 
-  const fetchUrls = async () => {
+  const fetchUrls = async (page = 1) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/url/me`,
+        `${import.meta.env.VITE_BASE_URL}/url/me?page=${page}&limit=${limit}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUrls(response.data.urls || []);
+      setTotalLinks(response.data.totalLinks || 0);
+      setGlobalClicks(response.data.totalClicks || 0);
+      setTotalPages(response.data.totalPages || 1);
+      setCurrentPage(response.data.currentPage || 1);
     } catch (error) {
       toast.error("Failed to load URLs");
     } finally {
@@ -41,14 +50,13 @@ function Dashboard() {
     if (!window.confirm("Are you sure you want to delete this link?")) return;
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/url/delete`,
-        { shortUrl },
+      const response = await axios.delete(
+        `${import.meta.env.VITE_BASE_URL}/url/${shortUrl}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data && response.data.status) {
         toast.success("URL deleted");
-        fetchUrls();
+        fetchUrls(currentPage);
       } else {
         toast.error("Failed to delete URL");
       }
@@ -61,8 +69,6 @@ function Dashboard() {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");
   };
-
-  const totalClicks = urls.reduce((acc, curr) => acc + curr.clicks, 0);
 
   // Partition links into Active and Expired
   const now = new Date();
@@ -208,7 +214,7 @@ function Dashboard() {
              </div>
              <span className="text-xs font-medium text-gray-500 uppercase tracking-widest">Total Links</span>
           </div>
-          <h2 className="text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">{urls.length}</h2>
+          <h2 className="text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">{totalLinks}</h2>
         </div>
         
         <div className="glass-card p-6 rounded-xl relative overflow-hidden">
@@ -218,7 +224,7 @@ function Dashboard() {
              </div>
              <span className="text-xs font-medium text-gray-500 uppercase tracking-widest">Total Clicks</span>
           </div>
-          <h2 className="text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">{totalClicks}</h2>
+          <h2 className="text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">{globalClicks}</h2>
         </div>
       </div>
 
@@ -250,6 +256,28 @@ function Dashboard() {
             </div>
           </div>
           {renderUrlTable(expiredUrls, true)}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-6 p-4 glass-card rounded-xl">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => fetchUrls(currentPage - 1)}
+            className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors text-gray-700 dark:text-gray-200"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => fetchUrls(currentPage + 1)}
+            className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors text-gray-700 dark:text-gray-200"
+          >
+            Next
+          </button>
         </div>
       )}
 

@@ -99,9 +99,9 @@ function UrlShortner() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/url/original`,
-        { shortUrl: shortUrl.split('/').pop() }, // safely extract code if full URL given
+      const shortCode = shortUrl.split('/').pop();
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/url/original/${shortCode}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
