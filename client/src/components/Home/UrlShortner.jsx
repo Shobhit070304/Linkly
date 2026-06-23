@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import axios from "axios";
 import { useState } from "react";
 import { AuthContext } from "../../context/UserContext";
@@ -27,8 +27,25 @@ function UrlShortner() {
   const [expiresAt, setExpiresAt] = useState("");
   const [qrCode, setQrCode] = useState("");
   const [oneTime, setOneTime] = useState(false);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("");
+  const [workspaces, setWorkspaces] = useState([]);
 
   const { user } = useContext(AuthContext);
+
+  // Fetch user workspaces once on mount to populate the dropdown
+  useEffect(() => {
+    if (!user) return;
+    const fetchWorkspaces = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/workspaces`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setWorkspaces(res.data.workspaces || []);
+      } catch { /* non-critical, silently fail */ }
+    };
+    fetchWorkspaces();
+  }, [user]);
 
   const handleShortenUrl = async () => {
     if (!user) {
@@ -63,6 +80,7 @@ function UrlShortner() {
           customShort: customShort || undefined,
           maxClicks: maxClicks ? Number(maxClicks) : undefined,
           expiresAt: expiresAt || undefined,
+          workspaceId: selectedWorkspaceId || undefined,
         },
         {
           headers: {
@@ -223,6 +241,22 @@ function UrlShortner() {
                   />
                   Self-destruct after 1 click
                 </label>
+
+                {workspaces.length > 0 && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Assign to Workspace</label>
+                    <select
+                      value={selectedWorkspaceId}
+                      onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-md bg-white dark:bg-black text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white border border-gray-200 dark:border-white/10 transition-all"
+                    >
+                      <option value="">No workspace (personal)</option>
+                      {workspaces.map((ws) => (
+                        <option key={ws.id} value={ws.id}>{ws.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -6,7 +6,7 @@ import {
   Link as LinkIcon,
   Home,
   BarChart2,
-  Settings,
+  FolderOpen,
   LogOut,
   Sun,
   Moon,
@@ -29,6 +29,7 @@ const DashboardLayout = ({ children }) => {
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: Home },
     { name: "Analytics", path: "/analytics", icon: BarChart2 },
+    { name: "Workspaces", path: "/workspaces", icon: FolderOpen },
   ];
 
   const randomSeed = user?.name + Math.floor(Math.random() * 10000);
@@ -65,7 +66,9 @@ const DashboardLayout = ({ children }) => {
 
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.name === "Analytics" && location.pathname.startsWith("/analytics"));
+            const isActive = location.pathname === item.path 
+              || (item.name === "Analytics" && location.pathname.startsWith("/analytics"))
+              || (item.name === "Workspaces" && location.pathname.startsWith("/workspaces"));
             return (
               <Link
                 key={item.name}

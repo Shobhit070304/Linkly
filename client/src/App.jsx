@@ -10,6 +10,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const PreviewPage = lazy(() => import("./pages/PreviewPage"));
 const Analytics = lazy(() => import("./pages/Analytics"));
+const Workspaces = lazy(() => import("./pages/Workspaces"));
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -53,6 +54,14 @@ function App() {
           element={
             <DashboardLayout>
               <Analytics />
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/workspaces"
+          element={
+            <DashboardLayout>
+              <Workspaces />
             </DashboardLayout>
           }
         />

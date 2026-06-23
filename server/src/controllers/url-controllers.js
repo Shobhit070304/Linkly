@@ -5,9 +5,10 @@ const Url = require("../models/url-model");
 const User = require("../models/user-model");
 const QRCode = require("qrcode");
 const ogs = require("open-graph-scraper");
+ const Workspace = require('../models/workspace-model');
 
 module.exports.shortenUrl = async (req, res) => {
-  const { longUrl, customShort, maxClicks, expiresAt } = req.body;
+  const { longUrl, customShort, maxClicks, expiresAt, workspaceId } = req.body;
   if (!longUrl) {
     return res
       .status(400)
@@ -76,12 +77,27 @@ module.exports.shortenUrl = async (req, res) => {
     const fullShortUrl = `${process.env.FRONTEND_URL}/preview/${shortUrl}`;
     const qrCode = await QRCode.toDataURL(fullShortUrl);
 
+    // Determine workspaceId — from API key auth takes priority, then from UI form input
+    let resolvedWorkspaceId = null;
+    if (req.workspace) {
+      // API key auth: link belongs to the workspace whose key was used
+      resolvedWorkspaceId = req.workspace.id;
+    } else if (workspaceId) {
+      // UI auth: user selected a workspace — verify they own it
+      const ownedWorkspace = await Workspace.findOne({ where: { id: workspaceId, userId: user.id } });
+      if (!ownedWorkspace) {
+        return res.status(403).json({ status: false, error: "Workspace not found or not authorized" });
+      }
+      resolvedWorkspaceId = workspaceId;
+    }
+
     // Save in DB
     const newUrl = await Url.create({
       customShort: customShort || "",
       shortUrl,
       longUrl,
       userId: user.id,
+      workspaceId: resolvedWorkspaceId,
       clicks: 0,
       qrCode,
       maxClicks: maxClicks || null,
@@ -211,8 +227,14 @@ module.exports.getMyUrls = async (req, res) => {
 
     let page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
-    
-    const count = await Url.count({ where: { userId: user.id } });
+
+    // Optional workspace filter
+    const filterWorkspaceId = req.query.workspaceId || null;
+    const whereClause = filterWorkspaceId
+      ? { userId: user.id, workspaceId: filterWorkspaceId }
+      : { userId: user.id };
+
+    const count = await Url.count({ where: whereClause });
     const totalPages = Math.ceil(count / limit) || 1;
     
     if (page > totalPages) {
@@ -221,7 +243,7 @@ module.exports.getMyUrls = async (req, res) => {
     const offset = Math.max(0, (page - 1) * limit);
 
     const urls = await Url.findAll({
-      where: { userId: user.id },
+      where: whereClause,
       limit,
       offset,
       order: [["createdAt", "DESC"]],

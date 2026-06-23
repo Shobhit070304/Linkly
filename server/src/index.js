@@ -11,10 +11,21 @@ require("./workers/analyticsWorker.js"); // Initialize worker
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 
+// CORS configuration (MUST be at the top to handle preflight and all responses correctly)
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+app.use(cors(corsOptions));
+// Explicitly handle OPTIONS preflight for all routes
+app.options(/(.*)/, cors(corsOptions));
+
 // Security and performance middleware
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === "production" ? 100 : 1000, // Limit each IP to 100 in prod, 1000 in dev
   message: "Too many requests from this IP, please try again after 15 minutes",
   standardHeaders: true,
   legacyHeaders: false,
@@ -35,15 +46,9 @@ connectDB();
 //Routes
 const urlRoutes = require("./routes/url-routes.js");
 const userRoutes = require("./routes/user-routes.js");
+const workspaceRoutes = require("./routes/workspace-routes.js");
 const Url = require("./models/url-model.js");
 
-//Middleware
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "*",
-    credentials: true,
-  })
-);
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(express.json({ limit: "1mb" }));
 
@@ -57,6 +62,7 @@ app.get("/", (req, res) => {
 // API Routes - these must come before the wildcard route
 app.use("/api/url", urlRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/workspaces", workspaceRoutes);
 
 // API route for getting link metadata
 app.get("/api/links/:shortCode", async (req, res) => {

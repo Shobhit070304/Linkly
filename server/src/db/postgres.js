@@ -24,13 +24,20 @@ const connectDB = async () => {
     const User = require("../models/user-model");
     const Url = require("../models/url-model");
     const Click = require("../models/click-model");
+    const Workspace = require("../models/workspace-model");
     
     // Setup associations
     User.hasMany(Url, { foreignKey: 'userId', as: 'urls' });
     Url.belongsTo(User, { foreignKey: 'userId', as: 'user' });
     Url.hasMany(Click, { foreignKey: 'urlId', as: 'clickEvents', onDelete: 'CASCADE' });
     Click.belongsTo(Url, { foreignKey: 'urlId', as: 'url' });
-    
+
+    // Workspace associations
+    User.hasMany(Workspace, { foreignKey: 'userId', as: 'workspaces', onDelete: 'CASCADE' });
+    Workspace.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+    Workspace.hasMany(Url, { foreignKey: 'workspaceId', as: 'urls', onDelete: 'CASCADE' });
+    Url.belongsTo(Workspace, { foreignKey: 'workspaceId', as: 'workspace' });
+
     // Sync all models — only creates tables if they don't exist, never alters existing schema.
     // WARNING: Schema changes must be applied manually via raw SQL migrations.
     await sequelize.sync({ alter: false });

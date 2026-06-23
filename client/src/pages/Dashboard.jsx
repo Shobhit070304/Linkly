@@ -21,15 +21,31 @@ function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
+  const [workspaces, setWorkspaces] = useState([]);
+  const [activeWorkspace, setActiveWorkspace] = useState(""); // empty = all links
   const { user } = useContext(AuthContext);
 
-  const fetchUrls = async (page = 1) => {
+  useEffect(() => {
+    const fetchWorkspaces = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/workspaces`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setWorkspaces(res.data.workspaces || []);
+      } catch { /* non-critical */ }
+    };
+    fetchWorkspaces();
+  }, [user]);
+
+  const fetchUrls = async (page = 1, workspaceId = activeWorkspace) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/url/me?page=${page}&limit=${limit}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      let url = `${import.meta.env.VITE_BASE_URL}/url/me?page=${page}&limit=${limit}`;
+      if (workspaceId) url += `&workspaceId=${workspaceId}`;
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setUrls(response.data.urls || []);
       setTotalLinks(response.data.totalLinks || 0);
       setGlobalClicks(response.data.totalClicks || 0);
@@ -203,6 +219,26 @@ function Dashboard() {
       <div className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">Overview</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Manage your links and view performance.</p>
+        
+        {/* Workspace Filter */}
+        {workspaces.length > 0 && (
+          <div className="mt-4 flex items-center gap-3">
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Filter by Workspace:</label>
+            <select
+              value={activeWorkspace}
+              onChange={(e) => {
+                setActiveWorkspace(e.target.value);
+                fetchUrls(1, e.target.value);
+              }}
+              className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-900 dark:text-white focus:outline-none transition-all"
+            >
+              <option value="">All Links</option>
+              {workspaces.map((ws) => (
+                <option key={ws.id} value={ws.id}>{ws.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}

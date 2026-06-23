@@ -60,6 +60,14 @@ const Url = sequelize.define("Url", {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  workspaceId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: "workspaces",
+      key: "id",
+    },
+  },
 }, {
   tableName: 'urls',
   timestamps: true,
