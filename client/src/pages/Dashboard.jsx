@@ -10,7 +10,9 @@ import {
   Trash2,
   ArrowRight,
   QrCode,
-  AlertCircle
+  AlertCircle,
+  HeartPulse,
+  RefreshCw
 } from "lucide-react";
 
 function Dashboard() {
@@ -23,6 +25,7 @@ function Dashboard() {
   const limit = 10;
   const [workspaces, setWorkspaces] = useState([]);
   const [activeWorkspace, setActiveWorkspace] = useState(""); // empty = all links
+  const [checkingHealth, setCheckingHealth] = useState({}); // { [shortUrl]: true } loading state
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
@@ -78,6 +81,29 @@ function Dashboard() {
       }
     } catch (error) {
       toast.error("An error occurred while deleting");
+    }
+  };
+
+  const handleReVerifyHealth = async (shortUrl) => {
+    setCheckingHealth((prev) => ({ ...prev, [shortUrl]: true }));
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/url/${shortUrl}/check-health`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.isHealthy) {
+        toast.success("✅ Link is healthy and back in monitoring!");
+      } else {
+        toast.warning(`⚠️ ${res.data.message}`);
+      }
+      // Refresh the list to get updated health status from DB
+      fetchUrls(currentPage);
+    } catch {
+      toast.error("Health check failed. Try again later.");
+    } finally {
+      setCheckingHealth((prev) => ({ ...prev, [shortUrl]: false }));
     }
   };
 
@@ -144,6 +170,22 @@ function Dashboard() {
                               <Copy className="w-3.5 h-3.5" />
                             </button>
                           )}
+                          {/* Health badge */}
+                          {checkingHealth[url.shortUrl] ? (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-[9px] font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50">
+                              <RefreshCw className="w-2.5 h-2.5 animate-spin" /> CHECKING...
+                            </span>
+                          ) : url.monitorHealth && !url.isHealthy ? (
+                            <span title={`Broken: ${url.lastCheckedAt ? 'Last checked ' + new Date(url.lastCheckedAt).toLocaleString() : 'unknown'}`}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-[9px] font-semibold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
+                              <AlertCircle className="w-2.5 h-2.5" /> BROKEN
+                            </span>
+                          ) : url.monitorHealth && url.isHealthy ? (
+                            <span title={`Monitored · Last checked ${url.lastCheckedAt ? new Date(url.lastCheckedAt).toLocaleString() : 'not yet'}`}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-900/20 text-[9px] font-semibold text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800/50">
+                              <HeartPulse className="w-2.5 h-2.5" /> OK
+                            </span>
+                          ) : null}
                         </div>
                         <a href={isExpiredSection ? "#" : shortLink} target={isExpiredSection ? "_self" : "_blank"} rel="noreferrer" className="text-xs text-blue-500 hover:underline">
                           {import.meta.env.VITE_BACKEND_URL ? import.meta.env.VITE_BACKEND_URL.replace(/^https?:\/\//, '') + '/' : 'linkly.com/'}{url.customShort || url.shortUrl}
@@ -183,6 +225,18 @@ function Dashboard() {
                           a.click();
                         }} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Download QR">
                           <QrCode className="w-4 h-4" />
+                        </button>
+                      )}
+
+                      {/* Re-verify health button — only shown for broken monitored links */}
+                      {url.monitorHealth && !url.isHealthy && !isExpiredSection && (
+                        <button
+                          onClick={() => handleReVerifyHealth(url.shortUrl)}
+                          disabled={checkingHealth[url.shortUrl]}
+                          className="text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-50"
+                          title="Re-verify health"
+                        >
+                          <RefreshCw className={`w-4 h-4 ${checkingHealth[url.shortUrl] ? 'animate-spin' : ''}`} />
                         </button>
                       )}
                       

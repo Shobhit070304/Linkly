@@ -29,6 +29,7 @@ function UrlShortner() {
   const [oneTime, setOneTime] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("");
   const [workspaces, setWorkspaces] = useState([]);
+  const [monitorHealth, setMonitorHealth] = useState(true); // default: monitor enabled
 
   const { user } = useContext(AuthContext);
 
@@ -81,6 +82,7 @@ function UrlShortner() {
           maxClicks: maxClicks ? Number(maxClicks) : undefined,
           expiresAt: expiresAt || undefined,
           workspaceId: selectedWorkspaceId || undefined,
+          monitorHealth,
         },
         {
           headers: {
@@ -257,6 +259,18 @@ function UrlShortner() {
                     </select>
                   </div>
                 )}
+
+                {/* Health Monitor Toggle */}
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={monitorHealth}
+                    onChange={(e) => setMonitorHealth(e.target.checked)}
+                    className="rounded text-black focus:ring-black dark:text-white dark:focus:ring-white bg-white dark:bg-black border-gray-300 dark:border-gray-600"
+                  />
+                  <span>Monitor Link Health</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">(auto-ping to detect broken links)</span>
+                </label>
               </div>
             )}
           </div>

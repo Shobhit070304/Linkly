@@ -1,14 +1,15 @@
 const { getRedisClient } = require("../utils/redis-connection");
 const { URL } = require("url");
+const axios = require("axios");
 const encodeBase62 = require("../utils/helper");
 const Url = require("../models/url-model");
 const User = require("../models/user-model");
 const QRCode = require("qrcode");
 const ogs = require("open-graph-scraper");
- const Workspace = require('../models/workspace-model');
+const Workspace = require('../models/workspace-model');
 
 module.exports.shortenUrl = async (req, res) => {
-  const { longUrl, customShort, maxClicks, expiresAt, workspaceId } = req.body;
+  const { longUrl, customShort, maxClicks, expiresAt, workspaceId, monitorHealth } = req.body;
   if (!longUrl) {
     return res
       .status(400)
@@ -102,6 +103,7 @@ module.exports.shortenUrl = async (req, res) => {
       qrCode,
       maxClicks: maxClicks || null,
       expiresAt: expiresAt || null,
+      monitorHealth: monitorHealth !== false, // default true unless explicitly set to false
       ...meta,
     });
 
@@ -322,5 +324,95 @@ module.exports.deleteUrl = async (req, res) => {
     return res
       .status(500)
       .json({ status: false, error: "Internal Server Error" });
+  }
+};
+
+// ─────────────────────────────────────────────────
+// Manual Health Check — "Re-verify" button
+// Pings the destination URL inline, resets failure count if alive.
+// This re-enters a broken link into the background monitor rotation.
+// ─────────────────────────────────────────────────
+const PING_TIMEOUT_MS = 5000;
+const BROWSER_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const FAILURE_THRESHOLD = 3;
+
+module.exports.checkUrlHealthManual = async (req, res) => {
+  try {
+    const { shortUrl } = req.params;
+    const user = req.user;
+
+    const dbUser = await User.findOne({ where: { email: user.email } });
+    if (!dbUser) {
+      return res.status(404).json({ status: false, error: "User not found" });
+    }
+
+    // Ownership check — user can only check their own links
+    const url = await Url.findOne({ where: { shortUrl, userId: dbUser.id } });
+    if (!url) {
+      return res.status(404).json({ status: false, error: "Link not found or not authorized" });
+    }
+
+    const pingConfig = {
+      timeout: PING_TIMEOUT_MS,
+      headers: { "User-Agent": BROWSER_USER_AGENT },
+      maxRedirects: 5,
+      validateStatus: () => true,
+    };
+
+    let alive = false;
+    let statusCode = null;
+    let errorMsg = null;
+
+    try {
+      const response = await axios.head(url.longUrl, pingConfig);
+      if (response.status === 405) {
+        // HEAD not allowed — try GET
+        const getRes = await axios.get(url.longUrl, pingConfig);
+        alive = getRes.status < 500;
+        statusCode = getRes.status;
+      } else {
+        alive = response.status < 500;
+        statusCode = response.status;
+      }
+    } catch (err) {
+      alive = false;
+      errorMsg = err.message;
+    }
+
+    if (alive) {
+      // ✅ Site is reachable — fully reset health state
+      await url.update({
+        isHealthy: true,
+        healthStatus: "healthy",
+        healthCheckFailureCount: 0,
+        lastCheckedAt: new Date(),
+      });
+      return res.json({
+        status: true,
+        isHealthy: true,
+        healthStatus: "healthy",
+        statusCode,
+        message: "Link is healthy! It has been re-added to automatic monitoring.",
+      });
+    } else {
+      // ❌ Still broken — increment failure count but don't re-enter rotation
+      const newFailureCount = Math.min((url.healthCheckFailureCount || 0) + 1, FAILURE_THRESHOLD);
+      await url.update({
+        healthCheckFailureCount: newFailureCount,
+        isHealthy: false,
+        healthStatus: "broken",
+        lastCheckedAt: new Date(),
+      });
+      return res.json({
+        status: true,
+        isHealthy: false,
+        healthStatus: "broken",
+        statusCode,
+        message: `Destination is still unreachable${errorMsg ? ": " + errorMsg : " (HTTP " + statusCode + ")"}.`,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ status: false, error: "Internal Server Error" });
   }
 };

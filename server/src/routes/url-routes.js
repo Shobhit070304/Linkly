@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const verifyUser = require("../middlewares/auth");
-const { shortenUrl, originalUrl, deleteUrl, getMyUrls } = require("../controllers/url-controllers");
+const { shortenUrl, originalUrl, deleteUrl, getMyUrls, checkUrlHealthManual } = require("../controllers/url-controllers");
 const { getAnalytics, getGlobalAnalytics } = require("../controllers/analytics-controllers");
 
 
@@ -17,6 +17,9 @@ router.get("/me", verifyUser, getMyUrls);
 
 // Delete URL
 router.delete("/:shortUrl", verifyUser, deleteUrl);
+
+// Manual health check (Re-verify button) — resets failure count if site is back online
+router.post("/:shortUrl/check-health", verifyUser, checkUrlHealthManual);
 
 // Get Global Analytics
 router.get("/analytics/me", verifyUser, getGlobalAnalytics);

@@ -68,6 +68,27 @@ const Url = sequelize.define("Url", {
       key: "id",
     },
   },
+  // Health Monitoring fields
+  monitorHealth: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  isHealthy: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  healthStatus: {
+    type: DataTypes.STRING,
+    defaultValue: "healthy", // "healthy" | "broken"
+  },
+  healthCheckFailureCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  lastCheckedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
 }, {
   tableName: 'urls',
   timestamps: true,

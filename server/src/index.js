@@ -7,7 +7,9 @@ const helmet = require("helmet");
 const { connectDB } = require("./db/postgres.js");
 const { getRedisClient } = require("./utils/redis-connection.js");
 const analyticsQueue = require("./queues/analyticsQueue.js");
-require("./workers/analyticsWorker.js"); // Initialize worker
+require("./workers/analyticsWorker.js"); // Initialize analytics worker
+require("./queues/healthQueue.js");      // Register health-check cron scheduler
+require("./workers/healthWorker.js");   // Initialize health-check worker
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 
