@@ -88,59 +88,61 @@ export default function PreviewPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        Loading preview...
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)", color: "var(--text-primary)" }}>
+        <div style={{ width: 28, height: 28, border: "2px solid var(--border)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }}></div>
       </div>
     );
   }
 
   if (!link) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-red-400 px-4 text-center font-sans">
-        <div className="bg-gray-800 rounded-2xl shadow-lg p-8 max-w-md w-full border border-gray-700">
-          <p className="text-xl font-bold text-red-400 mb-2">🚫 Link Unavailable</p>
-          <p className="text-gray-300 text-sm">{errorMsg || "Link not found or expired."}</p>
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--bg)", padding: "1.5rem", textAlign: "center", fontFamily: "Plus Jakarta Sans, sans-serif" }}>
+        <div className="card" style={{ padding: "2.5rem 1.5rem", maxWidth: 420, width: "100%" }}>
+          <p style={{ fontSize: "1.125rem", fontWeight: 700, color: "#f87171", margin: "0 0 0.5rem" }}>🚫 Link Unavailable</p>
+          <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", margin: 0 }}>{errorMsg || "Link not found or expired."}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-900 px-4">
-      <div className="bg-gray-800 rounded-2xl shadow-lg p-6 max-w-lg w-full text-center">
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--bg)", padding: "1.5rem", fontFamily: "Plus Jakarta Sans, sans-serif" }}>
+      <div className="card" style={{ padding: "2rem 1.5rem", maxWidth: 440, width: "100%", textAlign: "center" }}>
         <img
           src={link.favicon || import.meta.env.VITE_DEFAULT_PREVIEW_IMG}
           alt="Preview"
-          className="h-16 w-16 mx-auto mb-4 rounded-lg"
+          style={{ width: 56, height: 56, margin: "0 auto 1rem", borderRadius: 10, objectFit: "cover" }}
         />
-        <h1 className="text-xl font-bold text-white mb-2">
+        <h1 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--text-primary)", margin: "0 0 0.375rem" }}>
           {link.title || "Untitled Page"}
         </h1>
-        <p className="text-gray-400 text-sm mb-6">
+        <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", margin: "0 0 1.5rem", lineHeight: 1.5 }}>
           {link.description || "No description available"}
         </p>
 
         {/* Password Gate */}
         {!unlocked ? (
-          <form onSubmit={handleVerify} className="flex flex-col gap-3">
-            <p className="text-gray-300 text-sm">🔒 This link is password protected</p>
+          <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <p style={{ fontSize: "0.8125rem", color: "var(--accent-light)", margin: 0 }}>🔒 This link is password protected</p>
             <input
               type="password"
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
               placeholder="Enter password"
-              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="input"
+              style={{ textAlign: "center" }}
               autoFocus
             />
             {passwordError && (
-              <p className="text-red-400 text-xs">{passwordError}</p>
+              <p style={{ fontSize: "0.75rem", color: "#f87171", margin: 0 }}>{passwordError}</p>
             )}
             <button
               type="submit"
               disabled={verifying || !passwordInput}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-6 py-2 rounded-lg transition-all text-sm font-medium"
+              className="btn-primary"
+              style={{ width: "100%", justifyContent: "center" }}
             >
-              {verifying ? "Verifying..." : "Unlock"}
+              {verifying ? "Verifying..." : "Unlock Link"}
             </button>
           </form>
         ) : (
@@ -149,11 +151,12 @@ export default function PreviewPage() {
               href={link.longUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-all"
+              className="btn-primary"
+              style={{ textDecoration: "none", width: "100%", justifyContent: "center", padding: "0.625rem 1.25rem", fontSize: "0.875rem" }}
             >
               Continue to Site
             </a>
-            <p className="text-gray-500 text-xs mt-4">
+            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "1rem", margin: "1rem 0 0" }}>
               {countdown > 0
                 ? `Redirecting in ${countdown}s...`
                 : "Redirecting now..."}
@@ -161,7 +164,7 @@ export default function PreviewPage() {
           </>
         )}
 
-        <p className="text-gray-600 text-xs mt-4">via Linkly 🔗 Smart Preview</p>
+        <p style={{ fontSize: "0.6875rem", color: "var(--text-muted)", marginTop: "1.25rem" }}>via Linkly 🔗 Smart Preview</p>
       </div>
     </div>
   );

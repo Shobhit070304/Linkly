@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import UserContext from "./context/UserContext.jsx";
-import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { BrowserRouter } from "react-router-dom";
 import { Component } from "react";
 
@@ -25,15 +24,15 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-          <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-            <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
-            <p className="text-gray-700 mb-4">
-              We're sorry, but there was an error loading this page. Please try refreshing or contact support if the problem persists.
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111115" }}>
+          <div style={{ background: "#17171c", border: "1px solid rgba(255,255,255,0.07)", padding: "2rem", borderRadius: "12px", maxWidth: "420px", width: "100%", textAlign: "center" }}>
+            <h2 style={{ color: "#f0f0f2", marginBottom: "0.75rem", fontSize: "1.125rem", fontWeight: 600 }}>Something went wrong</h2>
+            <p style={{ color: "#8b8b99", fontSize: "0.875rem", marginBottom: "1.25rem" }}>
+              An error occurred while loading this page. Please try refreshing.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors"
+              style={{ background: "#f0f0f2", color: "#111115", padding: "0.5rem 1.25rem", borderRadius: "8px", fontWeight: 500, fontSize: "0.875rem", cursor: "pointer", border: "none" }}
             >
               Refresh Page
             </button>
@@ -45,32 +44,27 @@ class ErrorBoundary extends Component {
   }
 }
 
-// Performance optimization: Only use StrictMode in development
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Failed to find the root element");
 
 const root = createRoot(rootElement);
 root.render(
-  process.env.NODE_ENV === 'development' ? (
+  process.env.NODE_ENV === "development" ? (
     <StrictMode>
       <BrowserRouter>
         <ErrorBoundary>
-          <ThemeProvider>
-            <UserContext>
-              <App />
-            </UserContext>
-          </ThemeProvider>
+          <UserContext>
+            <App />
+          </UserContext>
         </ErrorBoundary>
       </BrowserRouter>
     </StrictMode>
   ) : (
     <BrowserRouter>
       <ErrorBoundary>
-        <ThemeProvider>
-          <UserContext>
-            <App />
-          </UserContext>
-        </ThemeProvider>
+        <UserContext>
+          <App />
+        </UserContext>
       </ErrorBoundary>
     </BrowserRouter>
   )

@@ -1,15 +1,14 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
-import { useState } from "react";
 import { AuthContext } from "../../context/UserContext";
 import { toast } from "react-toastify";
 import {
   Link as LinkIcon,
   Expand as ExpandIcon,
   Copy as CopyIcon,
-  AlertCircle as AlertCircleIcon,
   Loader2 as Loader2Icon,
-  Settings2
+  Settings2,
+  Lock,
 } from "lucide-react";
 
 function UrlShortner() {
@@ -19,7 +18,7 @@ function UrlShortner() {
   const [retrivedLongUrl, setRetrivedLongUrl] = useState("");
   const [loadingShortUrl, setLoadingShortUrl] = useState(false);
   const [loadingLongUrl, setLoadingLongUrl] = useState(false);
-  
+
   // Advanced options state
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [customShort, setCustomShort] = useState("");
@@ -29,12 +28,11 @@ function UrlShortner() {
   const [oneTime, setOneTime] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("");
   const [workspaces, setWorkspaces] = useState([]);
-  const [monitorHealth, setMonitorHealth] = useState(false); // default: off (opt-in)
+  const [monitorHealth, setMonitorHealth] = useState(false);
   const [linkPassword, setLinkPassword] = useState("");
 
   const { user } = useContext(AuthContext);
 
-  // Fetch user workspaces once on mount to populate the dropdown
   useEffect(() => {
     if (!user) return;
     const fetchWorkspaces = async () => {
@@ -44,7 +42,7 @@ function UrlShortner() {
           headers: { Authorization: `Bearer ${token}` },
         });
         setWorkspaces(res.data.workspaces || []);
-      } catch { /* non-critical, silently fail */ }
+      } catch { /* non-critical */ }
     };
     fetchWorkspaces();
   }, [user]);
@@ -65,7 +63,7 @@ function UrlShortner() {
         toast.error("Only http:// and https:// protocols are supported");
         return;
       }
-    } catch (err) {
+    } catch {
       toast.error("Please enter a valid absolute URL (e.g., https://example.com)");
       return;
     }
@@ -78,7 +76,7 @@ function UrlShortner() {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/url/shorten`,
         {
-          longUrl: longUrl,
+          longUrl,
           customShort: customShort || undefined,
           maxClicks: maxClicks ? Number(maxClicks) : undefined,
           expiresAt: expiresAt || undefined,
@@ -121,7 +119,7 @@ function UrlShortner() {
 
     try {
       const token = localStorage.getItem("token");
-      const shortCode = shortUrl.split('/').pop();
+      const shortCode = shortUrl.split("/").pop();
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/url/original/${shortCode}`,
         {
@@ -151,89 +149,157 @@ function UrlShortner() {
   };
 
   return (
-    <main className="flex flex-col items-center justify-center px-4 py-16 bg-[#fafafa] dark:bg-[#000000] transition-colors font-sans min-h-[calc(100vh-140px)]">
-      <div className="text-center mb-12 max-w-2xl">
-        <h1 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight mb-4">
-          Advanced Routing
+    <main style={{
+      minHeight: "calc(100vh - 60px)",
+      background: "var(--bg)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "3.5rem 1.5rem 5rem",
+      position: "relative",
+      zIndex: 2,
+      fontFamily: "Plus Jakarta Sans, sans-serif",
+    }}>
+      
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: "2.5rem", maxWidth: 560 }}>
+        <h1 style={{ fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.035em", color: "var(--text-primary)", margin: "0 0 0.5rem" }}>
+          Shorten & Expand Links
         </h1>
-        <p className="text-gray-500 dark:text-gray-400">
-          Configure custom aliases, click limits, and expiration dates.
+        <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", margin: 0, lineHeight: 1.5 }}>
+          Configure custom aliases, click limits, expiration dates, and password locks.
         </p>
       </div>
 
-      <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto">
+      <div style={{ width: "100%", maxWidth: 560, display: "flex", flexDirection: "column", gap: "1.25rem" }}>
         
         {/* Shorten URL Panel */}
-        <div className="glass-card p-6 md:p-8 rounded-xl flex flex-col h-full relative overflow-hidden">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-md bg-black text-white dark:bg-white dark:text-black">
-                <LinkIcon className="h-4 w-4" />
+        <div className="card" style={{ padding: "1.75rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <div style={{ background: "var(--accent-glow)", border: "1px solid rgba(99,102,241,0.3)", padding: "5px", borderRadius: "6px", display: "flex" }}>
+                <LinkIcon style={{ color: "var(--accent-light)", width: 14, height: 14 }} />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+              <h2 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
                 Create Short Link
               </h2>
             </div>
             <button 
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-xs font-medium px-2.5 py-1 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors flex items-center gap-1.5"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                color: showAdvanced ? "var(--accent-light)" : "var(--text-secondary)",
+                background: showAdvanced ? "var(--accent-glow)" : "rgba(255,255,255,0.04)",
+                border: showAdvanced ? "1px solid rgba(99,102,241,0.3)" : "1px solid var(--border)",
+                borderRadius: "6px",
+                padding: "0.3rem 0.65rem",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
             >
-              <Settings2 className="w-3.5 h-3.5" /> 
+              <Settings2 style={{ width: 12, height: 12 }} /> 
               Options
             </button>
           </div>
 
-          <div className="space-y-4 flex-grow">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Destination URL</label>
-              <input
-                type="text"
-                value={longUrl}
-                onChange={(e) => setLongUrl(e.target.value)}
-                placeholder="https://your-very-long-url.com/something"
-                className="w-full px-3 py-2.5 rounded-md bg-[#fafafa] dark:bg-[#0a0a0a] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white border border-gray-200 dark:border-white/10 transition-all"
-              />
-            </div>
+          <div>
+            <label className="label">Destination URL</label>
+            <input
+              type="text"
+              value={longUrl}
+              onChange={(e) => setLongUrl(e.target.value)}
+              placeholder="https://your-very-long-url.com/something"
+              className="input"
+              onKeyDown={(e) => e.key === "Enter" && handleShortenUrl()}
+            />
+          </div>
 
-            {showAdvanced && (
-              <div className="p-4 rounded-md bg-[#fafafa] dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 space-y-4">
+          {showAdvanced && (
+            <div style={{
+              background: "var(--bg-input)",
+              border: "1px solid var(--border)",
+              borderRadius: "10px",
+              padding: "1.25rem",
+              marginTop: "1rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+            }}>
+              <div>
+                <label className="label">Custom Alias</label>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <span className="alias-prefix" style={{ padding: "0.625rem 0.875rem", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRight: "none", borderRadius: "8px 0 0 8px", fontSize: "0.8125rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                    linklyx.vercel.app/
+                  </span>
+                  <input
+                    type="text"
+                    value={customShort}
+                    onChange={(e) => setCustomShort(e.target.value)}
+                    placeholder="my-brand"
+                    className="input"
+                    style={{ borderRadius: "0 8px 8px 0", borderLeft: "none" }}
+                  />
+                </div>
+              </div>
+
+              <div className="responsive-grid-2">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Custom Alias</label>
-                  <div className="flex items-center">
-                    <span className="px-3 py-2 bg-gray-100 dark:bg-white/5 text-gray-500 rounded-l-md border border-r-0 border-gray-200 dark:border-white/10 text-sm">{import.meta.env.VITE_BACKEND_URL ? import.meta.env.VITE_BACKEND_URL.replace(/^https?:\/\//, '') + '/' : 'linkly.com/'}</span>
-                    <input
-                      type="text"
-                      value={customShort}
-                      onChange={(e) => setCustomShort(e.target.value)}
-                      placeholder="my-brand"
-                      className="w-full px-3 py-2 rounded-r-md bg-white dark:bg-black text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white border border-gray-200 dark:border-white/10 transition-all"
-                    />
-                  </div>
+                  <label className="label">Max Clicks (0 for unltd)</label>
+                  <input
+                    type="number"
+                    value={maxClicks}
+                    onChange={(e) => setMaxClicks(e.target.value)}
+                    placeholder="0"
+                    className="input"
+                  />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Max Clicks (0 for unltd)</label>
-                    <input
-                      type="number"
-                      value={maxClicks}
-                      onChange={(e) => setMaxClicks(e.target.value)}
-                      placeholder="0"
-                      className="w-full px-3 py-2 rounded-md bg-white dark:bg-black text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white border border-gray-200 dark:border-white/10 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Expiration Date</label>
-                    <input
-                      type="date"
-                      value={expiresAt}
-                      onChange={(e) => setExpiresAt(e.target.value)}
-                      className="w-full px-3 py-2 rounded-md bg-white dark:bg-black text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white border border-gray-200 dark:border-white/10 transition-all"
-                    />
-                  </div>
+                <div>
+                  <label className="label">Expiration Date</label>
+                  <input
+                    type="date"
+                    value={expiresAt}
+                    onChange={(e) => setExpiresAt(e.target.value)}
+                    className="input"
+                  />
                 </div>
+              </div>
 
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 mt-2 cursor-pointer">
+              <div>
+                <label className="label" style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <Lock style={{ width: 11, height: 11 }} /> Password Protection (optional)
+                </label>
+                <input
+                  type="password"
+                  value={linkPassword}
+                  onChange={(e) => setLinkPassword(e.target.value)}
+                  placeholder="Leave blank for no password"
+                  className="input"
+                />
+              </div>
+
+              {workspaces.length > 0 && (
+                <div>
+                  <label className="label">Assign to Workspace</label>
+                  <select
+                    value={selectedWorkspaceId}
+                    onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">No workspace (personal)</option>
+                    {workspaces.map((ws) => (
+                      <option key={ws.id} value={ws.id}>{ws.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem", paddingTop: "0.25rem" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8125rem", color: "var(--text-secondary)", cursor: "pointer" }}>
                   <input
                     type="checkbox"
                     checked={oneTime}
@@ -241,83 +307,71 @@ function UrlShortner() {
                       setOneTime(e.target.checked);
                       setMaxClicks(e.target.checked ? "1" : "");
                     }}
-                    className="rounded text-black focus:ring-black dark:text-white dark:focus:ring-white bg-white dark:bg-black border-gray-300 dark:border-gray-600"
+                    style={{ accentColor: "var(--accent)", width: 14, height: 14 }}
                   />
                   Self-destruct after 1 click
                 </label>
 
-                {workspaces.length > 0 && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Assign to Workspace</label>
-                    <select
-                      value={selectedWorkspaceId}
-                      onChange={(e) => setSelectedWorkspaceId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-md bg-white dark:bg-black text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white border border-gray-200 dark:border-white/10 transition-all"
-                    >
-                      <option value="">No workspace (personal)</option>
-                      {workspaces.map((ws) => (
-                        <option key={ws.id} value={ws.id}>{ws.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* Health Monitor Toggle */}
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8125rem", color: "var(--text-secondary)", cursor: "pointer" }}>
                   <input
                     type="checkbox"
                     checked={monitorHealth}
                     onChange={(e) => setMonitorHealth(e.target.checked)}
-                    className="rounded text-black focus:ring-black dark:text-white dark:focus:ring-white bg-white dark:bg-black border-gray-300 dark:border-gray-600"
+                    style={{ accentColor: "var(--accent)", width: 14, height: 14 }}
                   />
-                  <span>Monitor Link Health</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500">(auto-ping to detect broken links)</span>
+                  Monitor Link Health
                 </label>
-
-                {/* Password Protection */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Password Protection (optional)</label>
-                  <input
-                    type="password"
-                    value={linkPassword}
-                    onChange={(e) => setLinkPassword(e.target.value)}
-                    placeholder="Leave blank for no password"
-                    className="w-full px-3 py-2 rounded-md bg-white dark:bg-black text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white border border-gray-200 dark:border-white/10 transition-all"
-                  />
-                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          <div className="pt-6 mt-auto">
+          <div style={{ marginTop: "1.25rem" }}>
             <button
               onClick={handleShortenUrl}
               disabled={loadingShortUrl}
-              className={`w-full py-2.5 rounded-md bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black text-sm font-medium transition-colors ${loadingShortUrl ? "opacity-70 cursor-not-allowed" : ""}`}
+              className="btn-primary"
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                padding: "0.625rem",
+                fontSize: "0.875rem",
+                opacity: loadingShortUrl ? 0.65 : 1,
+              }}
             >
               {loadingShortUrl ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2Icon className="h-4 w-4 animate-spin" /> Shortening...
+                <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Loader2Icon style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> Shortening...
                 </span>
               ) : "Create Link"}
             </button>
 
             {generatedShortUrl && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-[#0a0a0a] rounded-md border border-gray-200 dark:border-white/10">
-                <p className="text-xs font-medium text-gray-500 mb-2">Ready to share</p>
-                <div className="flex items-center justify-between gap-3 bg-white dark:bg-black p-2 rounded-md border border-gray-200 dark:border-white/10">
-                  <a href={generatedShortUrl} target="_blank" rel="noopener noreferrer" className="text-gray-900 dark:text-white font-mono text-xs truncate hover:underline">
+              <div style={{
+                marginTop: "1.25rem",
+                padding: "1.25rem",
+                background: "var(--bg-input)",
+                borderRadius: "10px",
+                border: "1px solid var(--border-glow)",
+              }}>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>Ready to share</p>
+                <div style={{ display: "flex", alignItems: "center", justifyBetween: "space-between", gap: "0.5rem", background: "var(--bg-card)", padding: "0.625rem 0.875rem", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                  <a href={generatedShortUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-light)", fontFamily: "monospace", fontSize: "0.875rem", fontWeight: 600, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {generatedShortUrl}
                   </a>
-                  <button onClick={() => { navigator.clipboard.writeText(generatedShortUrl); toast.success("Copied"); }} className="p-1.5 rounded bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors" title="Copy">
-                    <CopyIcon className="h-3.5 w-3.5" />
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(generatedShortUrl); toast.success("Copied to clipboard"); }}
+                    className="btn-ghost"
+                    style={{ padding: "0.35rem 0.625rem", fontSize: "0.75rem" }}
+                    title="Copy"
+                  >
+                    <CopyIcon style={{ width: 13, height: 13 }} />
                   </button>
                 </div>
                 
                 {qrCode && (
-                  <div className="mt-4 flex flex-col items-center justify-center border-t border-gray-200 dark:border-white/10 pt-4">
-                    <img src={qrCode} alt="QR Code" className="w-24 h-24 bg-white p-1 rounded-sm border border-gray-200 dark:border-white/10 mb-2" />
-                    <button onClick={downloadQR} className="text-xs font-medium text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors">
+                  <div style={{ marginTop: "1rem", borderTop: "1px solid var(--border)", paddingTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", justifyCenter: "center", gap: "0.5rem" }}>
+                    <img src={qrCode} alt="QR Code" style={{ width: 96, height: 96, background: "#ffffff", padding: 4, borderRadius: 8, border: "1px solid var(--border)" }} />
+                    <button onClick={downloadQR} className="btn-ghost" style={{ fontSize: "0.75rem", padding: "0.3rem 0.75rem" }}>
                       Download QR Code
                     </button>
                   </div>
@@ -328,51 +382,63 @@ function UrlShortner() {
         </div>
 
         {/* Expand URL Panel */}
-        <div className="glass-card p-6 md:p-8 rounded-xl flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-1.5 rounded-md bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300">
-              <ExpandIcon className="h-4 w-4" />
+        <div className="card" style={{ padding: "1.75rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", padding: "5px", borderRadius: "6px", display: "flex" }}>
+              <ExpandIcon style={{ color: "var(--text-secondary)", width: 14, height: 14 }} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+            <h2 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
               Expand Link
             </h2>
           </div>
 
-          <div className="space-y-4 flex-grow">
-             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Short URL</label>
-              <input
-                type="text"
-                value={shortUrl}
-                onChange={(e) => setShortUrl(e.target.value)}
-                placeholder="https://linkly.com/abc123"
-                className="w-full px-3 py-2.5 rounded-md bg-[#fafafa] dark:bg-[#0a0a0a] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white border border-gray-200 dark:border-white/10 transition-all"
-              />
-            </div>
+          <div>
+            <label className="label">Short URL</label>
+            <input
+              type="text"
+              value={shortUrl}
+              onChange={(e) => setShortUrl(e.target.value)}
+              placeholder="https://linklyx.vercel.app/abc123"
+              className="input"
+              onKeyDown={(e) => e.key === "Enter" && handleOriginalUrl()}
+            />
           </div>
 
-          <div className="pt-6 mt-auto">
+          <div style={{ marginTop: "1.25rem" }}>
             <button
               onClick={handleOriginalUrl}
               disabled={loadingLongUrl}
-              className={`w-full py-2.5 rounded-md bg-white hover:bg-gray-50 dark:bg-[#0a0a0a] dark:hover:bg-white/5 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 text-sm font-medium transition-colors ${loadingLongUrl ? "opacity-70 cursor-not-allowed" : ""}`}
+              className="btn-ghost"
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                padding: "0.625rem",
+                fontSize: "0.875rem",
+                opacity: loadingLongUrl ? 0.65 : 1,
+              }}
             >
               {loadingLongUrl ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2Icon className="h-4 w-4 animate-spin" /> Expanding...
+                <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Loader2Icon style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> Expanding...
                 </span>
               ) : "Get Original URL"}
             </button>
 
             {retrivedLongUrl && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-[#0a0a0a] rounded-md border border-gray-200 dark:border-white/10">
-                <p className="text-xs font-medium text-gray-500 mb-2">Original Destination</p>
-                <div className="flex items-center justify-between gap-3 bg-white dark:bg-black p-2 rounded-md border border-gray-200 dark:border-white/10">
-                  <a href={retrivedLongUrl} target="_blank" rel="noopener noreferrer" className="text-gray-900 dark:text-white font-mono text-xs truncate flex-1 hover:underline">
+              <div style={{
+                marginTop: "1.25rem",
+                padding: "1.25rem",
+                background: "var(--bg-input)",
+                borderRadius: "10px",
+                border: "1px solid var(--border)",
+              }}>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>Original Destination</p>
+                <div style={{ display: "flex", alignItems: "center", justifyBetween: "space-between", gap: "0.5rem", background: "var(--bg-card)", padding: "0.625rem 0.875rem", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                  <a href={retrivedLongUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-light)", fontSize: "0.8125rem", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                     {retrivedLongUrl}
                   </a>
-                  <button onClick={() => { navigator.clipboard.writeText(retrivedLongUrl); toast.success("Copied"); }} className="p-1.5 rounded bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors" title="Copy">
-                    <CopyIcon className="h-3.5 w-3.5" />
+                  <button onClick={() => { navigator.clipboard.writeText(retrivedLongUrl); toast.success("Copied to clipboard"); }} className="btn-ghost" style={{ padding: "0.35rem 0.625rem", fontSize: "0.75rem" }}>
+                    <CopyIcon style={{ width: 13, height: 13 }} />
                   </button>
                 </div>
               </div>
@@ -381,6 +447,7 @@ function UrlShortner() {
         </div>
 
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </main>
   );
 }

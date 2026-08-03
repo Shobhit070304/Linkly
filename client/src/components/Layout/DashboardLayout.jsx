@@ -1,22 +1,18 @@
 import React, { useContext, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/UserContext";
-import { ThemeContext } from "../../context/ThemeContext";
 import {
   Link as LinkIcon,
   Home,
   BarChart2,
   FolderOpen,
   LogOut,
-  Sun,
-  Moon,
   Menu,
   X,
 } from "lucide-react";
 
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useContext(AuthContext);
-  const { theme, toggleTheme } = useContext(ThemeContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,111 +28,145 @@ const DashboardLayout = ({ children }) => {
     { name: "Workspaces", path: "/workspaces", icon: FolderOpen },
   ];
 
-  const randomSeed = user?.name + Math.floor(Math.random() * 10000);
-  const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${user?.name || "User"}&backgroundColor=000000&textColor=ffffff`;
+  const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${user?.name || "User"}&backgroundColor=17171c&textColor=f0f0f2`;
+
+  const sidebarContent = (
+    <div style={{
+      width: 220,
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      background: "var(--bg-card)",
+      borderRight: "1px solid var(--border)",
+    }}>
+      {/* Logo */}
+      <div style={{ height: 56, padding: "0 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)" }}>
+        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
+          <div style={{ background: "var(--text-primary)", borderRadius: "6px", padding: "4px 5px", display: "flex", alignItems: "center" }}>
+            <LinkIcon style={{ color: "var(--bg)", width: 13, height: 13 }} />
+          </div>
+          <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary)", letterSpacing: "-0.02em" }}>Linkly</span>
+        </Link>
+        <button onClick={() => setSidebarOpen(false)} style={{ display: "none", background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer" }} className="sidebar-close">
+          <X style={{ width: 18, height: 18 }} />
+        </button>
+      </div>
+
+      {/* Nav Items */}
+      <nav style={{ flex: 1, padding: "0.75rem 0.75rem", display: "flex", flexDirection: "column", gap: "0.125rem" }}>
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path
+            || (item.name === "Analytics" && location.pathname.startsWith("/analytics"))
+            || (item.name === "Workspaces" && location.pathname.startsWith("/workspaces"));
+          return (
+            <Link
+              key={item.name}
+              to={item.path}
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.625rem",
+                padding: "0.4375rem 0.75rem",
+                borderRadius: "8px",
+                fontSize: "0.8125rem",
+                fontWeight: isActive ? 500 : 400,
+                textDecoration: "none",
+                color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
+                background: isActive ? "rgba(255,255,255,0.07)" : "transparent",
+                transition: "background 0.12s ease, color 0.12s ease",
+              }}
+              onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "var(--text-primary)"; } }}
+              onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-secondary)"; } }}
+            >
+              <item.icon style={{ width: 15, height: 15, opacity: isActive ? 1 : 0.6 }} />
+              {item.name}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* User Footer */}
+      <div style={{ padding: "0.75rem", borderTop: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", padding: "0.5rem 0.625rem", borderRadius: "8px", marginBottom: "0.375rem" }}>
+          <img src={avatar} alt="Avatar" style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid var(--border-strong)" }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: "0.8125rem", fontWeight: 500, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>{user?.name}</p>
+            <p style={{ fontSize: "0.6875rem", color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>{user?.email}</p>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0.4375rem", borderRadius: "8px", fontSize: "0.8125rem", color: "var(--text-secondary)", background: "transparent", border: "none", cursor: "pointer", transition: "color 0.12s ease, background 0.12s ease" }}
+          onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.08)"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "transparent"; }}
+        >
+          <LogOut style={{ width: 14, height: 14 }} />
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#fafafa] dark:bg-[#000000] text-gray-900 dark:text-gray-100 transition-colors">
-      
-      {/* Mobile Sidebar Overlay */}
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)" }}>
+
+      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+        <div
           onClick={() => setSidebarOpen(false)}
-        ></div>
+          style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+          className="mobile-overlay"
+        />
       )}
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 glass-card border-r flex flex-col transition-transform duration-300 md:translate-x-0 md:static ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-black/5 dark:border-white/10">
-          <Link to="/" className="flex items-center gap-2 font-semibold text-lg tracking-tight">
-            <div className="bg-black dark:bg-white p-1 rounded-md">
-              <LinkIcon className="text-white dark:text-black w-4 h-4" />
-            </div>
-            Linkly
-          </Link>
-          <button className="md:hidden text-gray-500" onClick={() => setSidebarOpen(false)}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path 
-              || (item.name === "Analytics" && location.pathname.startsWith("/analytics"))
-              || (item.name === "Workspaces" && location.pathname.startsWith("/workspaces"));
-            return (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-black text-white dark:bg-white/10 dark:text-white"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                <item.icon className={`w-4 h-4 ${isActive ? "" : "opacity-70"}`} />
-                {item.name}
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="p-4 border-t border-black/5 dark:border-white/10">
-          <div className="flex items-center gap-3 px-2 py-2 mb-2">
-            <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full ring-1 ring-black/10 dark:ring-white/20" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-md transition-colors"
-            >
-              {theme === "light" ? (
-                <>
-                  <Moon className="w-3.5 h-3.5" /> Dark
-                </>
-              ) : (
-                <>
-                  <Sun className="w-3.5 h-3.5" /> Light
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center justify-center p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+      {/* Sidebar — Desktop: static, Mobile: fixed */}
+      <aside style={{ flexShrink: 0 }} className="sidebar-desktop">
+        {sidebarContent}
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile Header */}
-        <header className="md:hidden flex items-center justify-between h-16 px-4 glass border-b">
-          <button onClick={() => setSidebarOpen(true)} className="text-gray-500 hover:text-gray-900 dark:hover:text-white">
-            <Menu className="w-5 h-5" />
+      {/* Mobile Sidebar */}
+      <aside
+        style={{
+          position: "fixed", inset: "0 auto 0 0", zIndex: 50, width: 220,
+          transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.25s ease",
+        }}
+        className="sidebar-mobile"
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* Main */}
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+        {/* Mobile header */}
+        <header style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 1rem", borderBottom: "1px solid var(--border)", background: "var(--bg-card)" }} className="mobile-header">
+          <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex" }}>
+            <Menu style={{ width: 18, height: 18 }} />
           </button>
-          <div className="font-semibold tracking-tight">Linkly</div>
-          <div className="w-5 h-5"></div> {/* Spacer for centering */}
+          <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>Linkly</span>
+          <div style={{ width: 18 }} />
         </header>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div style={{ flex: 1, overflowY: "auto" }}>
           {children}
         </div>
       </main>
+
+      <style>{`
+        .sidebar-desktop { display: flex; }
+        .sidebar-mobile { display: none; }
+        .mobile-header { display: none; }
+        .mobile-overlay { display: none; }
+        .sidebar-close { display: none; }
+        @media (max-width: 767px) {
+          .sidebar-desktop { display: none; }
+          .sidebar-mobile { display: flex; }
+          .mobile-header { display: flex; }
+          .mobile-overlay { display: block; }
+          .sidebar-close { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 };
