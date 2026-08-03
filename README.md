@@ -39,12 +39,14 @@ Linkly is a production-ready, full-stack URL management platform and developer A
 
 *   ⚡ **Cache-First Routing**: Fast redirects hitting Upstash Redis before querying the database, ensuring low-latency lookups.
 *   📬 **Async Analytics Queue**: Click events (IP, User-Agent, referrers) are queued in BullMQ and parsed by workers asynchronously.
+*   🔐 **Password Protection**: Gate sensitive or private links behind custom SHA-256 hashed passwords. Recipients must unlock the link before redirecting.
+*   📧 **Automated Email Alerts**: Background email dispatch via Resend when a link reaches its max click limit or expiration date.
 *   👥 **Multi-Tenant Workspaces**: Group and organize links into collaborative workspaces.
 *   🔑 **Developer API Keys**: Programmatic, machine-to-machine integrations. API keys (`linkly_sk_...`) are SHA-256 hashed before storage.
-*   ❤️ **Automated Health Monitoring**: BullMQ workers periodically check target URLs (HEAD requests with GET fallbacks), auto-marking dead links as broken after 3 consecutive failures.
+*   ❤️ **Automated Health Monitoring**: BullMQ workers periodically check target URLs, auto-marking dead links as broken after 3 consecutive failures.
 *   🔄 **Instant Re-verification**: Inline user-triggered health checks with visual loading states for manual recovery.
 *   🖼️ **Social Preview Cards**: Automatic scraping of Open Graph meta-tags (title, description, image) for bot-rich links and preview cards.
-*   🔒 **Enterprise Security**: Dual auth (Firebase JWT + Secure API Keys), rate limiting, Helmet security headers, and compression.
+*   🎨 **Soft Slate Dark UI**: Modern SaaS theme with Newsreader classic editorial typography and responsive layouts.
 *   ⚙️ **Link Controls**: Custom short-code aliases, expiration timestamps, click limits (self-destructing links), and downloadable QR codes.
 
 ---
@@ -52,16 +54,18 @@ Linkly is a production-ready, full-stack URL management platform and developer A
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Core:** React 19, Vite, Tailwind CSS (V4)
+- **Core:** React 19, Vite, Tailwind CSS
+- **Typography:** Plus Jakarta Sans, Newsreader (Classic Editorial Serif)
 - **State & Routing:** React Router, Context API
-- **Analytics & Visuals:** Recharts, Lucide Icons, Framer Motion
+- **Analytics & Visuals:** Recharts, Lucide Icons
 - **Networking:** Axios, Firebase Client SDK
 
 ### Backend
 - **Core:** Node.js, Express, Sequelize (PostgreSQL)
 - **Caching & Queues:** Redis (ioredis), BullMQ
-- **Background Engines:** `geoip-lite` (location metrics), `ua-parser-js` (device stats), `open-graph-scraper` (meta scraping)
-- **Security:** Firebase Admin SDK, Helmet, `express-rate-limit`, `bcrypt`, `crypto`
+- **Email Notifications:** Resend API
+- **Background Engines:** `ua-parser-js` (device stats), `open-graph-scraper` (meta scraping)
+- **Security:** Firebase Admin SDK, Helmet, `express-rate-limit`, `crypto` (SHA-256 hashing)
 
 ---
 
@@ -144,6 +148,9 @@ BACKEND_URL=http://localhost:8000/
 # Previews
 DEFAULT_PREVIEW_IMG=https://example.com/default-preview.png
 
+# Email Dispatch (Resend)
+RESEND_API_KEY=re_your_resend_api_key
+
 # Firebase Service Account
 FIREBASE_TYPE=service_account
 FIREBASE_PROJECT_ID=your_project_id
@@ -153,12 +160,14 @@ FIREBASE_CLIENT_EMAIL=your_client_email
 ```
 
 ### 3. Setup Database Schema
-Before starting the backend, run the migration scripts to ensure your tables have the workspace and health-check fields:
+Before starting the backend, run the migration scripts to ensure your PostgreSQL tables have all required columns (workspaces, health checks, passwords, and email notification flags):
 
 ```bash
 # From the server/ directory
 node migrate-workspaces.js
 node migrate-health-check.js
+node migrate-password.js
+node migrate-emails.js
 ```
 
 ### 4. Run the Application
@@ -177,11 +186,12 @@ npm start
 
 All requests must contain a valid `Authorization: Bearer <token>` header, accepting either a Firebase JWT token or a Workspace API Key (`linkly_sk_...`).
 
-### 🔗 URLs
-- `POST /api/url/shorten` - Shorten a target URL (supports custom aliases, workspaces, expiry, health-monitoring config).
+### 🔗 URLs & Links
+- `POST /api/url/shorten` - Shorten a target URL (supports custom aliases, workspaces, password lock, expiry, health-monitoring config).
 - `GET /api/url/me` - Fetch the authenticated user's URLs (supports filtering by workspace).
-- `POST /api/url/:shortUrl/check-health` - Manually trigger an instant health check and return results.
-- `POST /api/url/delete` - Delete a short URL (evicts related cache keys).
+- `POST /api/links/:shortCode/verify` - Verify a password-protected short link and reveal destination URL.
+- `POST /api/url/:shortUrl/check-health` - Manually trigger an instant health check and return status.
+- `DELETE /api/url/:shortUrl` - Delete a short URL (evicts related cache keys).
 
 ### 👥 Workspaces
 - `POST /api/workspaces/create` - Create a workspace and generate a secure API Key.
