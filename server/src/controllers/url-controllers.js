@@ -5,7 +5,7 @@ const encodeBase62 = require("../utils/helper");
 const Url = require("../models/url-model");
 const User = require("../models/user-model");
 const QRCode = require("qrcode");
-const ogs = require("open-graph-scraper");
+// open-graph-scraper v6+ is ESM-only; loaded via dynamic import() inside shortenUrl
 const Workspace = require('../models/workspace-model');
 
 module.exports.shortenUrl = async (req, res) => {
@@ -61,21 +61,23 @@ module.exports.shortenUrl = async (req, res) => {
       return res.status(404).json({ status: false, error: "User not found" });
     }
 
-    // Fetch meta info
+    // Fetch meta info (ogs v6 is ESM-only — use dynamic import)
     let meta = {};
     try {
+      const { default: ogs } = await import("open-graph-scraper");
       const { result } = await ogs({ url: longUrl });
+      const faviconUrl = new URL(longUrl).origin + "/favicon.ico";
       meta = {
         title: result.ogTitle || result.twitterTitle || longUrl,
         description: result.ogDescription || "",
-        favicon: result.favicon || "",
+        favicon: faviconUrl,
       };
     } catch (err) {
       meta = { title: longUrl, description: "", favicon: "" };
     }
 
     // Generate QR
-    const fullShortUrl = `${process.env.FRONTEND_URL}/preview/${shortUrl}`;
+    const fullShortUrl = `${process.env.BACKEND_URL}${shortUrl}`;
     const qrCode = await QRCode.toDataURL(fullShortUrl);
 
     // Determine workspaceId — from API key auth takes priority, then from UI form input

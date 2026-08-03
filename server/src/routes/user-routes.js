@@ -9,14 +9,14 @@ router.post("/login", verifyUser, async (req, res) => {
     try {
         const user = await User.findOne({ where: { email } });
         if (user) {
-            return res.status(200).json({ user });
+            return res.status(200).json({ status: true, message: "User found", user });
         }
         else {
             const newUser = await User.create({ name, email });
-            return res.status(200).json({ user: newUser });
+            return res.status(201).json({ status: true, message: "User created", user: newUser });
         }
     } catch (error) {
-        return res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({ status: false, message: "Internal Server Error" });
     }
 });
 

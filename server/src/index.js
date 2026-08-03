@@ -154,7 +154,7 @@ app.get("/:shortUrl", async (req, res) => {
     // 4. Asynchronously log analytics and sync click count to DB via BullMQ
     analyticsQueue.add("log-click", {
       urlId: urlData.id,
-      ipAddress: req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip,
+      ipAddress: (req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip || "").split(",")[0].trim(),
       userAgent: req.headers["user-agent"] || "",
       referrer: req.headers["referer"] || req.headers["referrer"] || "",
     });
