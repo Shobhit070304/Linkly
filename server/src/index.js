@@ -151,15 +151,7 @@ app.get("/:shortUrl", async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_URL}/preview/${urlData.shortUrl}`);
     }
 
-    // 4. Asynchronously log analytics and sync click count to DB via BullMQ
-    analyticsQueue.add("log-click", {
-      urlId: urlData.id,
-      ipAddress: (req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip || "").split(",")[0].trim(),
-      userAgent: req.headers["user-agent"] || "",
-      referrer: req.headers["referer"] || req.headers["referrer"] || "",
-    });
-
-    // Detect if request is from a crawler bot
+    // 4. Detect if request is from a crawler bot
     const userAgent = req.headers["user-agent"] || "";
     const isBot = /(facebook|twitter|whatsapp|linkedin|discord|bot|crawl|spider)/i.test(userAgent);
 
@@ -196,6 +188,14 @@ app.get("/:shortUrl", async (req, res) => {
       </html>
     `);
     }
+
+    // 5. Log analytics only for real users (not bots)
+    analyticsQueue.add("log-click", {
+      urlId: urlData.id,
+      ipAddress: (req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip || "").split(",")[0].trim(),
+      userAgent,
+      referrer: req.headers["referer"] || req.headers["referrer"] || "",
+    });
 
     // ✅ Send users to frontend preview page consistently
     return res.redirect(`${process.env.FRONTEND_URL}/preview/${urlData.shortUrl}`);

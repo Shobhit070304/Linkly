@@ -1,6 +1,7 @@
 import { createContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export const AuthContext = createContext();
 
@@ -32,14 +33,17 @@ const UserContext = ({ children }) => {
     }
     setLoading(false);
 
-    // Auto-logout when any API call gets 404 "User not found"
+    // Auto-logout when token is expired (401) or user is deleted from DB (404)
     const interceptorId = axios.interceptors.response.use(
       (response) => response,
       (error) => {
+        const status = error.response?.status;
+        const errMsg = error.response?.data?.error || "";
         if (
-          error.response?.status === 404 &&
-          error.response?.data?.error === "User not found"
+          status === 404 && errMsg === "User not found" ||
+          status === 401 && errMsg.includes("invalid token")
         ) {
+          toast.warn("Session expired. Please sign in again.");
           logoutRef.current?.();
         }
         return Promise.reject(error);
