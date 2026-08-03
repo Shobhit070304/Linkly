@@ -39,6 +39,28 @@ const logClick = async (urlId, ipAddress, userAgent, referrer) => {
 
     // 2. Asynchronously update the cumulative click counter in PostgreSQL
     await Url.increment("clicks", { by: 1, where: { id: urlId } });
+
+    // 3. Check if maxClicks limit reached and send notification email
+    const User = require("../models/user-model");
+    const updatedUrl = await Url.findByPk(urlId, {
+      include: [{ model: User, as: "user", attributes: ["email", "name"] }],
+    });
+    if (
+      updatedUrl &&
+      updatedUrl.maxClicks &&
+      updatedUrl.clicks >= updatedUrl.maxClicks &&
+      !updatedUrl.isEmailNotified
+    ) {
+      await updatedUrl.update({ isEmailNotified: true });
+      const { sendMaxClicksEmail } = require("./resendEmail");
+      await sendMaxClicksEmail(
+        updatedUrl.user?.email,
+        updatedUrl.user?.name,
+        updatedUrl.shortUrl,
+        updatedUrl.longUrl,
+        updatedUrl.maxClicks
+      );
+    }
   } catch (error) {
     console.error("Error logging click analytics:", error);
   }

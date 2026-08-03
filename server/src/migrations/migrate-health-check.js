@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { sequelize } = require("./src/db/postgres");
+const { sequelize } = require("../db/postgres");
 
 async function run() {
   try {

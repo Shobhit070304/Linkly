@@ -63,6 +63,32 @@ const healthWorker = new Worker(
 
       const now = new Date();
 
+      // Check for expired URLs and send notification emails
+      try {
+        const User = require("../models/user-model");
+        const { sendExpirationEmail } = require("../utils/resendEmail");
+        const expiredUrls = await Url.findAll({
+          where: {
+            expiresAt: { [Op.lte]: now },
+            isEmailNotified: false,
+          },
+          include: [{ model: User, as: "user", attributes: ["email", "name"] }],
+        });
+
+        for (const expiredUrl of expiredUrls) {
+          await expiredUrl.update({ isEmailNotified: true });
+          await sendExpirationEmail(
+            expiredUrl.user?.email,
+            expiredUrl.user?.name,
+            expiredUrl.shortUrl,
+            expiredUrl.longUrl,
+            expiredUrl.expiresAt
+          );
+        }
+      } catch (expErr) {
+        console.error("[Health] Error checking expired URLs:", expErr.message);
+      }
+
       // Only fetch URLs that:
       // 1. User opted into monitoring (monitorHealth = true)
       // 2. Are not already broken (isHealthy = true) — broken links are handled by manual "Re-verify"

@@ -29,7 +29,8 @@ function UrlShortner() {
   const [oneTime, setOneTime] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("");
   const [workspaces, setWorkspaces] = useState([]);
-  const [monitorHealth, setMonitorHealth] = useState(true); // default: monitor enabled
+  const [monitorHealth, setMonitorHealth] = useState(false); // default: off (opt-in)
+  const [linkPassword, setLinkPassword] = useState("");
 
   const { user } = useContext(AuthContext);
 
@@ -83,6 +84,7 @@ function UrlShortner() {
           expiresAt: expiresAt || undefined,
           workspaceId: selectedWorkspaceId || undefined,
           monitorHealth,
+          password: linkPassword || undefined,
         },
         {
           headers: {
@@ -271,6 +273,18 @@ function UrlShortner() {
                   <span>Monitor Link Health</span>
                   <span className="text-xs text-gray-400 dark:text-gray-500">(auto-ping to detect broken links)</span>
                 </label>
+
+                {/* Password Protection */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Password Protection (optional)</label>
+                  <input
+                    type="password"
+                    value={linkPassword}
+                    onChange={(e) => setLinkPassword(e.target.value)}
+                    placeholder="Leave blank for no password"
+                    className="w-full px-3 py-2 rounded-md bg-white dark:bg-black text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white border border-gray-200 dark:border-white/10 transition-all"
+                  />
+                </div>
               </div>
             )}
           </div>

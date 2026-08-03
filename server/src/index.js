@@ -78,7 +78,7 @@ app.get("/api/links/:shortCode", async (req, res) => {
 
     const now = new Date();
     let isExpired = link.expiresAt && now > link.expiresAt;
-    let isClickLimitReached = link.maxClicks && link.clicks >= link.maxClicks;
+    let isClickLimitReached = link.maxClicks && link.clicks > link.maxClicks;
 
     if (isExpired || isClickLimitReached) {
       return res.status(410).json({ error: "Link expired or click limit reached" });
@@ -89,7 +89,40 @@ app.get("/api/links/:shortCode", async (req, res) => {
       title: link.title || "",
       description: link.description || "",
       favicon: link.favicon || null,
+      isPasswordProtected: !!link.password,
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Verify password for a protected link
+app.post("/api/links/:shortCode/verify", async (req, res) => {
+  try {
+    const { shortCode } = req.params;
+    const { password } = req.body;
+    const link = await Url.findOne({ where: { shortUrl: shortCode } });
+
+    if (!link) return res.status(404).json({ error: "Link not found" });
+    if (!link.password) return res.status(400).json({ error: "Link is not password protected" });
+
+    const crypto = require("crypto");
+    const inputHash = crypto.createHash("sha256").update(password || "").digest("hex");
+
+    if (inputHash !== link.password) {
+      return res.status(401).json({ error: "Incorrect password" });
+    }
+
+    // ✅ Password is correct! NOW log analytics and increment click count
+    analyticsQueue.add("log-click", {
+      urlId: link.id,
+      ipAddress: (req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip || "").split(",")[0].trim(),
+      userAgent: req.headers["user-agent"] || "",
+      referrer: req.headers["referer"] || req.headers["referrer"] || "",
+    });
+
+    res.json({ longUrl: link.longUrl });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -189,13 +222,16 @@ app.get("/:shortUrl", async (req, res) => {
     `);
     }
 
-    // 5. Log analytics only for real users (not bots)
-    analyticsQueue.add("log-click", {
-      urlId: urlData.id,
-      ipAddress: (req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip || "").split(",")[0].trim(),
-      userAgent,
-      referrer: req.headers["referer"] || req.headers["referrer"] || "",
-    });
+    // 5. Log analytics and increment click count for non-password protected links
+    // (Password protected links log analytics only after successful password verification in /verify)
+    if (!urlData.password) {
+      analyticsQueue.add("log-click", {
+        urlId: urlData.id,
+        ipAddress: (req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip || "").split(",")[0].trim(),
+        userAgent,
+        referrer: req.headers["referer"] || req.headers["referrer"] || "",
+      });
+    }
 
     // ✅ Send users to frontend preview page consistently
     return res.redirect(`${process.env.FRONTEND_URL}/preview/${urlData.shortUrl}`);

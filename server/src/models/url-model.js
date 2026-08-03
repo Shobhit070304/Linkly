@@ -60,6 +60,10 @@ const Url = sequelize.define("Url", {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   workspaceId: {
     type: DataTypes.UUID,
     allowNull: true,
@@ -71,7 +75,7 @@ const Url = sequelize.define("Url", {
   // Health Monitoring fields
   monitorHealth: {
     type: DataTypes.BOOLEAN,
-    defaultValue: true,
+    defaultValue: false,
   },
   isHealthy: {
     type: DataTypes.BOOLEAN,
@@ -88,6 +92,11 @@ const Url = sequelize.define("Url", {
   lastCheckedAt: {
     type: DataTypes.DATE,
     allowNull: true,
+  },
+  // Email Notification flag (true if user was already notified for either click limit or date expiry)
+  isEmailNotified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   },
 }, {
   tableName: 'urls',

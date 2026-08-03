@@ -1,6 +1,7 @@
 const { getRedisClient } = require("../utils/redis-connection");
 const { URL } = require("url");
 const axios = require("axios");
+const crypto = require("crypto");
 const encodeBase62 = require("../utils/helper");
 const Url = require("../models/url-model");
 const User = require("../models/user-model");
@@ -9,7 +10,7 @@ const QRCode = require("qrcode");
 const Workspace = require('../models/workspace-model');
 
 module.exports.shortenUrl = async (req, res) => {
-  const { longUrl, customShort, maxClicks, expiresAt, workspaceId, monitorHealth } = req.body;
+  const { longUrl, customShort, maxClicks, expiresAt, workspaceId, monitorHealth, password } = req.body;
   if (!longUrl) {
     return res
       .status(400)
@@ -95,6 +96,9 @@ module.exports.shortenUrl = async (req, res) => {
     }
 
     // Save in DB
+    const hashedPassword = password
+      ? crypto.createHash("sha256").update(password).digest("hex")
+      : null;
     const newUrl = await Url.create({
       customShort: customShort || "",
       shortUrl,
@@ -105,7 +109,8 @@ module.exports.shortenUrl = async (req, res) => {
       qrCode,
       maxClicks: maxClicks || null,
       expiresAt: expiresAt || null,
-      monitorHealth: monitorHealth !== false, // default true unless explicitly set to false
+      monitorHealth: monitorHealth === true,
+      password: hashedPassword,
       ...meta,
     });
 
