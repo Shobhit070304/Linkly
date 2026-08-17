@@ -17,9 +17,18 @@ import {
 } from "recharts";
 import { ArrowLeft, BarChart3, Globe, Smartphone, Monitor } from "lucide-react";
 
-// Minimal monochromatic palette
-const COLORS = ["#000000", "#333333", "#666666", "#999999", "#cccccc", "#ebebeb"];
-const DARK_COLORS = ["#ffffff", "#cccccc", "#999999", "#666666", "#333333", "#1a1a1a"];
+const CHART_COLORS = ["#6366f1", "#818cf8", "#a5b4fc", "#4f46e5", "#3730a3", "#1e1b4b"];
+
+const StatCard = ({ label, value }) => (
+  <div className="card" style={{ padding: "1.25rem 1.5rem" }}>
+    <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 0.375rem" }}>
+      {label}
+    </p>
+    <p style={{ fontSize: "2.5rem", fontWeight: 800, letterSpacing: "-0.05em", color: "var(--text-primary)", margin: 0, lineHeight: 1 }}>
+      {value}
+    </p>
+  </div>
+);
 
 const Analytics = () => {
   const { shortCode } = useParams();
@@ -28,24 +37,6 @@ const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Reactive dark mode — updates if user toggles theme after page load
-  const [isDark, setIsDark] = useState(
-    document.documentElement.classList.contains("dark")
-  );
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    return () => observer.disconnect();
-  }, []);
-
-  const currentColors = isDark ? DARK_COLORS : COLORS;
-
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -53,7 +44,7 @@ const Analytics = () => {
         const endpoint = shortCode
           ? `${import.meta.env.VITE_BASE_URL}/url/analytics/${shortCode}`
           : `${import.meta.env.VITE_BASE_URL}/url/analytics/me`;
-          
+
         const response = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
@@ -65,27 +56,36 @@ const Analytics = () => {
         setLoading(false);
       }
     };
-
     fetchAnalytics();
   }, [shortCode]);
 
+  const tooltipStyle = {
+    contentStyle: {
+      backgroundColor: "var(--bg-card)",
+      borderColor: "var(--border-strong)",
+      borderRadius: "10px",
+      fontSize: "12px",
+      color: "var(--text-primary)",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+    },
+    itemStyle: { color: "var(--text-primary)" },
+    labelStyle: { color: "var(--text-muted)" },
+  };
+
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black dark:border-white"></div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "5rem 1rem", flex: 1 }}>
+        <div style={{ width: 28, height: 28, border: "2px solid var(--border)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-gray-800 dark:text-gray-200 p-12">
-        <h2 className="text-xl font-medium mb-2">Error loading analytics</h2>
-        <p className="mb-6 text-sm text-gray-500">{error}</p>
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition"
-        >
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5rem 1rem", flex: 1, textAlign: "center" }}>
+        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "var(--text-primary)", margin: "0 0 0.5rem" }}>Error loading analytics</h2>
+        <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", margin: "0 0 1.5rem" }}>{error}</p>
+        <button onClick={() => navigate("/dashboard")} className="btn-primary">
           Back to Dashboard
         </button>
       </div>
@@ -95,159 +95,155 @@ const Analytics = () => {
   if (!data) return null;
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8">
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: "2rem 1.5rem", fontFamily: "Plus Jakarta Sans, sans-serif" }}>
+
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8 border-b border-black/5 dark:border-white/10 pb-6">
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--border)" }}>
         <button
           onClick={() => navigate("/dashboard")}
-          className="p-2 bg-white dark:bg-black rounded-md border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+          className="btn-ghost"
+          style={{ padding: "0.4rem 0.75rem", flexShrink: 0 }}
         >
-          <ArrowLeft size={16} className="text-gray-600 dark:text-gray-300" />
+          <ArrowLeft style={{ width: 15, height: 15 }} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 tracking-tight">
+          <h1 style={{ fontSize: "1.375rem", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--text-primary)", margin: "0 0 0.125rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             {shortCode ? "Link Analytics" : "Global Analytics"}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", margin: 0 }}>
             {shortCode ? (
-              <>Performance data for <span className="font-mono text-black dark:text-white bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded ml-1">{shortCode}</span></>
-            ) : (
-              "Aggregated performance data across all your links"
-            )}
+              <>Performance data for{" "}
+                <code style={{ fontFamily: "monospace", color: "var(--accent-light)", background: "var(--accent-glow)", padding: "0.1rem 0.4rem", borderRadius: 4 }}>
+                  {shortCode}
+                </code>
+              </>
+            ) : "Aggregated performance across all your links"}
           </p>
         </div>
       </div>
 
-      <div className="mb-8">
-        <div className="glass-card p-6 rounded-xl inline-block min-w-[200px]">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-1">Total Clicks</p>
-          <p className="text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">{data.totalClicks}</p>
-        </div>
+      {/* Total Clicks */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <StatCard label="Total Clicks" value={data.totalClicks.toLocaleString()} />
       </div>
 
       {data.totalClicks === 0 ? (
-        <div className="glass-card rounded-xl p-16 text-center">
-          <BarChart3 className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-1 text-gray-900 dark:text-white">No data available yet</h3>
-          <p className="text-sm text-gray-500">Share your link to start gathering analytics.</p>
+        <div className="card" style={{ padding: "5rem 1rem", textAlign: "center" }}>
+          <BarChart3 style={{ width: 28, height: 28, color: "var(--text-muted)", margin: "0 auto 0.75rem", opacity: 0.5 }} />
+          <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-primary)", margin: "0 0 0.25rem" }}>No data yet</h3>
+          <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", margin: 0 }}>Share your link to start gathering analytics.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Timeline Chart */}
-          <div className="glass-card rounded-xl p-6 md:col-span-2">
-            <h3 className="text-sm font-semibold mb-6 text-gray-900 dark:text-white">Activity Over Time</h3>
-            <div className="h-72">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: "1.25rem" }}>
+
+          {/* Timeline — full width */}
+          <div className="card" style={{ padding: "1.5rem", gridColumn: "1 / -1" }}>
+            <h3 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)", margin: "0 0 1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <BarChart3 style={{ width: 15, height: 15, color: "var(--accent-light)" }} />
+              Activity Over Time
+            </h3>
+            <div style={{ height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.timeline}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#333" : "#e5e5e5"} vertical={false} />
-                  <XAxis dataKey="date" stroke={isDark ? "#888" : "#666"} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={10} />
-                  <YAxis stroke={isDark ? "#888" : "#666"} tick={{ fontSize: 12 }} allowDecimals={false} axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: isDark ? '#000' : '#fff', borderColor: isDark ? '#333' : '#e5e5e5', borderRadius: '8px', fontSize: '12px' }}
-                    itemStyle={{ color: isDark ? '#fff' : '#000' }}
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="date" stroke="var(--text-muted)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickMargin={10} />
+                  <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} axisLine={false} tickLine={false} />
+                  <Tooltip {...tooltipStyle} />
+                  <Line
+                    type="monotone" dataKey="clicks"
+                    stroke="#6366f1" strokeWidth={2.5}
+                    dot={{ r: 4, fill: "#6366f1", strokeWidth: 0 }}
+                    activeDot={{ r: 6, fill: "#818cf8" }}
                   />
-                  <Line type="monotone" dataKey="clicks" stroke={isDark ? "#fff" : "#000"} strokeWidth={2} dot={{ r: 4, fill: isDark ? "#fff" : "#000", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Countries Chart */}
-          <div className="glass-card rounded-xl p-6">
-            <h3 className="text-sm font-semibold mb-6 flex items-center gap-2 text-gray-900 dark:text-white">
-              <Globe size={16} className="text-gray-400" />
+          {/* Locations */}
+          <div className="card" style={{ padding: "1.5rem" }}>
+            <h3 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)", margin: "0 0 1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Globe style={{ width: 15, height: 15, color: "var(--accent-light)" }} />
               Locations
             </h3>
-            <div className="h-64">
+            <div style={{ height: 220 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.countries} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#333" : "#e5e5e5"} />
-                  <XAxis type="number" stroke={isDark ? "#888" : "#666"} allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                  <YAxis dataKey="name" type="category" stroke={isDark ? "#888" : "#666"} width={80} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                  <Tooltip contentStyle={{ backgroundColor: isDark ? '#000' : '#fff', borderColor: isDark ? '#333' : '#e5e5e5', borderRadius: '8px', fontSize: '12px' }} cursor={{fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'}}/>
-                  <Bar dataKey="value" fill={isDark ? "#fff" : "#000"} radius={[0, 4, 4, 0]} barSize={20} />
+                <BarChart data={data.countries} layout="vertical" margin={{ left: 0, right: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis type="number" stroke="var(--text-muted)" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="name" type="category" stroke="var(--text-muted)" width={70} axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                  <Tooltip {...tooltipStyle} cursor={{ fill: "rgba(99,102,241,0.06)" }} />
+                  <Bar dataKey="value" fill="#6366f1" radius={[0, 5, 5, 0]} barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Devices Chart */}
-          <div className="glass-card rounded-xl p-6">
-            <h3 className="text-sm font-semibold mb-6 flex items-center gap-2 text-gray-900 dark:text-white">
-              <Smartphone size={16} className="text-gray-400" />
+          {/* Devices Pie */}
+          <div className="card" style={{ padding: "1.5rem" }}>
+            <h3 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)", margin: "0 0 1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Smartphone style={{ width: 15, height: 15, color: "var(--accent-light)" }} />
               Devices
             </h3>
-            <div className="h-64 flex items-center justify-center relative">
+            <div style={{ height: 220, position: "relative" }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={data.devices}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="none"
+                    data={data.devices} cx="50%" cy="50%"
+                    innerRadius={62} outerRadius={82}
+                    paddingAngle={3} dataKey="value" stroke="none"
                   >
-                    {data.devices.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={currentColors[index % currentColors.length]} />
+                    {data.devices.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: isDark ? '#000' : '#fff', borderColor: isDark ? '#333' : '#e5e5e5', borderRadius: '8px', fontSize: '12px' }} />
+                  <Tooltip {...tooltipStyle} />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center">
-                  <span className="block text-2xl font-bold">{data.totalClicks}</span>
-                </div>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                <span style={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text-primary)" }}>
+                  {data.totalClicks}
+                </span>
               </div>
             </div>
-            <div className="flex justify-center gap-4 mt-2 flex-wrap">
+            <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
               {data.devices.map((entry, index) => (
-                <div key={entry.name} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: currentColors[index % currentColors.length] }}></div>
-                  <span>{entry.name}</span>
+                <div key={entry.name} style={{ display: "flex", alignItems: "center", gap: "0.375rem", fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: CHART_COLORS[index % CHART_COLORS.length] }} />
+                  {entry.name}
                 </div>
               ))}
             </div>
           </div>
-          
-          {/* Browsers Chart */}
-          <div className="glass-card rounded-xl p-6 md:col-span-2">
-             <h3 className="text-sm font-semibold mb-6 flex items-center gap-2 text-gray-900 dark:text-white">
-              <Monitor size={16} className="text-gray-400" />
-              Browsers & OS
+
+          {/* Browsers & OS — full width */}
+          <div className="card" style={{ padding: "1.5rem", gridColumn: "1 / -1" }}>
+            <h3 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)", margin: "0 0 1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Monitor style={{ width: 15, height: 15, color: "var(--accent-light)" }} />
+              Browsers &amp; OS
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                 <h4 className="text-xs font-medium text-gray-500 mb-4 border-b border-gray-100 dark:border-white/10 pb-2">Browsers</h4>
-                 <div className="space-y-1">
-                   {data.browsers.map((b, i) => (
-                     <div key={b.name} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-sm">
-                       <span className="text-gray-700 dark:text-gray-300">{b.name}</span>
-                       <span className="font-mono text-gray-500">{b.value}</span>
-                     </div>
-                   ))}
-                 </div>
-              </div>
-              <div>
-                 <h4 className="text-xs font-medium text-gray-500 mb-4 border-b border-gray-100 dark:border-white/10 pb-2">Operating Systems</h4>
-                 <div className="space-y-1">
-                   {data.os.map((o, i) => (
-                     <div key={o.name} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-sm">
-                       <span className="text-gray-700 dark:text-gray-300">{o.name}</span>
-                       <span className="font-mono text-gray-500">{o.value}</span>
-                     </div>
-                   ))}
-                 </div>
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "2rem" }}>
+              {[{ label: "Browsers", rows: data.browsers }, { label: "Operating Systems", rows: data.os }].map(({ label, rows }) => (
+                <div key={label}>
+                  <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 0.75rem", paddingBottom: "0.5rem", borderBottom: "1px solid var(--border)" }}>
+                    {label}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.125rem" }}>
+                    {rows.map((r) => (
+                      <div key={r.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.375rem 0.5rem", borderRadius: 6, transition: "background 0.12s" }} className="table-row-hover">
+                        <span style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>{r.name}</span>
+                        <span style={{ fontSize: "0.75rem", fontFamily: "monospace", color: "var(--accent-light)", fontWeight: 600 }}>{r.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
         </div>
       )}
+
+      <style>{`.table-row-hover:hover { background: rgba(255,255,255,0.03); }`}</style>
     </div>
   );
 };

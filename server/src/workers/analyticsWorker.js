@@ -1,7 +1,6 @@
 const { Worker } = require("bullmq");
 const IORedis = require("ioredis");
 const { logClick } = require("../utils/analytics");
-require("dotenv").config();
 
 const connection = new IORedis(process.env.REDIS_URL, {
     maxRetriesPerRequest: null,

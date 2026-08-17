@@ -9,13 +9,9 @@ import {
   Lock,
   HeartPulse,
   FolderOpen,
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
   Sparkles,
-  Copy,
-  ExternalLink,
-  QrCode,
 } from "lucide-react";
 
 // Feature Cards Data
@@ -105,7 +101,7 @@ function LandingPage() {
         </div>
 
         {/* Hero Heading with Classic Serif Font */}
-        <h1 style={{ fontSize: "clamp(2.5rem, 5.5vw, 4.25rem)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-0.04em", margin: "0 0 1.5rem" }}>
+        <h1 style={{ fontSize: "clamp(2.75rem, 6vw, 4.75rem)", fontWeight: 800, lineHeight: 1.06, letterSpacing: "-0.045em", margin: "0 0 1.5rem" }}>
           The modern platform for{" "}
           <span className="serif-classic" style={{ fontStyle: "italic", fontWeight: 400, color: "var(--accent-light)", background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             intelligent short links.
@@ -138,11 +134,11 @@ function LandingPage() {
             ["< 5ms", "Edge Latency"],
             ["100%", "Open Source"],
             ["Real-time", "Click Analytics"],
-            ["SSL / Encrypted", "Password Protection"],
+            ["SHA-256", "Password Protection"],
           ].map(([val, label]) => (
             <div key={label} style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "1.375rem", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--text-primary)" }}>{val}</div>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>{label}</div>
+              <div style={{ fontSize: "1.625rem", fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text-primary)", background: "linear-gradient(135deg, #a5b4fc, #818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{val}</div>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "0.3rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</div>
             </div>
           ))}
         </div>

@@ -4,6 +4,7 @@ const app = express();
 const cors = require("cors");
 const compression = require("compression");
 const helmet = require("helmet");
+const crypto = require("crypto");
 const { connectDB } = require("./db/postgres.js");
 const { getRedisClient } = require("./utils/redis-connection.js");
 const analyticsQueue = require("./queues/analyticsQueue.js");
@@ -54,8 +55,10 @@ const Url = require("./models/url-model.js");
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(express.json({ limit: "1mb" }));
 
-//  Logging
-app.use(morgan("dev"));
+//  Logging — only in development
+if (process.env.NODE_ENV !== "production") {
+  app.use(morgan("dev"));
+}
 
 app.get("/", (req, res) => {
   res.send("Hello from Backend");
@@ -107,7 +110,6 @@ app.post("/api/links/:shortCode/verify", async (req, res) => {
     if (!link) return res.status(404).json({ error: "Link not found" });
     if (!link.password) return res.status(400).json({ error: "Link is not password protected" });
 
-    const crypto = require("crypto");
     const inputHash = crypto.createHash("sha256").update(password || "").digest("hex");
 
     if (inputHash !== link.password) {

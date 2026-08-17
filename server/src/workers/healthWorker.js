@@ -3,7 +3,6 @@ const IORedis = require("ioredis");
 const axios = require("axios");
 const { Op } = require("sequelize");
 const Url = require("../models/url-model");
-require("dotenv").config();
 
 const connection = new IORedis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,

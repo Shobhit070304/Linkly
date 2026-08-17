@@ -294,7 +294,7 @@ function Dashboard() {
   }
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: "2rem 1.5rem", fontFamily: "Inter, sans-serif" }}>
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: "2rem 1.5rem", fontFamily: "Plus Jakarta Sans, sans-serif" }}>
       {/* Header */}
       <div style={{ marginBottom: "1.75rem" }}>
         <h1 style={{ fontSize: "1.375rem", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--text-primary)", margin: "0 0 0.25rem" }}>Overview</h1>
@@ -323,20 +323,24 @@ function Dashboard() {
 
       {/* Stats Cards */}
       <div className="responsive-grid-2" style={{ marginBottom: "1.75rem" }}>
-        <div className="card" style={{ padding: "1.25rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.625rem" }}>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>Total Links</span>
-            <LinkIcon style={{ width: 14, height: 14, color: "var(--text-muted)" }} />
+        <div className="card" style={{ padding: "1.5rem", borderTop: "2px solid var(--accent)", position: "relative", overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
+            <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Links</span>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: "var(--accent-glow)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <LinkIcon style={{ width: 13, height: 13, color: "var(--accent-light)" }} />
+            </div>
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 700, letterSpacing: "-0.04em", color: "var(--text-primary)" }}>{totalLinks}</div>
+          <div style={{ fontSize: "2.75rem", fontWeight: 800, letterSpacing: "-0.05em", lineHeight: 1, background: "linear-gradient(135deg, #f1f5f9, #94a3b8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{totalLinks}</div>
         </div>
 
-        <div className="card" style={{ padding: "1.25rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.625rem" }}>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>Total Clicks</span>
-            <BarChart2 style={{ width: 14, height: 14, color: "var(--text-muted)" }} />
+        <div className="card" style={{ padding: "1.5rem", borderTop: "2px solid #818cf8", position: "relative", overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
+            <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Clicks</span>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(129,140,248,0.1)", border: "1px solid rgba(129,140,248,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <BarChart2 style={{ width: 13, height: 13, color: "#818cf8" }} />
+            </div>
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 700, letterSpacing: "-0.04em", color: "var(--text-primary)" }}>{globalClicks}</div>
+          <div style={{ fontSize: "2.75rem", fontWeight: 800, letterSpacing: "-0.05em", lineHeight: 1, background: "linear-gradient(135deg, #a5b4fc, #818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{globalClicks.toLocaleString()}</div>
         </div>
       </div>
 

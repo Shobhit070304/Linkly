@@ -9,10 +9,10 @@ function Navbar() {
   const location = useLocation();
 
   if (loading) {
-    return <div style={{ height: "56px", borderBottom: "1px solid var(--border)" }} />;
+    return <div style={{ height: "60px", borderBottom: "1px solid var(--border)" }} />;
   }
 
-  const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${user?.name || "User"}&backgroundColor=17171c&textColor=f0f0f2`;
+  const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${user?.name || "User"}&backgroundColor=0f1117&textColor=818cf8`;
 
   const navLinks = [
     { label: "Home", to: "/" },
@@ -23,39 +23,71 @@ function Navbar() {
   return (
     <nav style={{
       position: "sticky", top: 0, zIndex: 50,
-      background: "rgba(17,17,21,0.85)",
-      backdropFilter: "blur(12px)",
+      background: "rgba(10, 12, 18, 0.88)",
+      backdropFilter: "blur(16px)",
       borderBottom: "1px solid var(--border)",
     }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 1.5rem", height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        
+      <div style={{
+        maxWidth: "1200px", margin: "0 auto", padding: "0 1.5rem",
+        height: "60px", display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+
         {/* Brand */}
-        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
-          <div style={{ background: "var(--text-primary)", borderRadius: "7px", padding: "4px 5px", display: "flex", alignItems: "center" }}>
-            <LinkIcon style={{ color: "var(--bg)", width: 14, height: 14 }} />
+        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "0.625rem", textDecoration: "none" }}>
+          <div style={{
+            background: "linear-gradient(135deg, #6d70ff, #4f46e5)",
+            borderRadius: "8px", padding: "5px 6px",
+            display: "flex", alignItems: "center",
+            boxShadow: "0 2px 10px rgba(99,102,241,0.4)",
+          }}>
+            <LinkIcon style={{ color: "#ffffff", width: 14, height: 14 }} />
           </div>
-          <span style={{ fontWeight: 600, fontSize: "0.9375rem", color: "var(--text-primary)", letterSpacing: "-0.02em" }}>Linkly</span>
+          <span style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)", letterSpacing: "-0.025em" }}>
+            Linkly
+          </span>
         </Link>
 
         {/* Desktop Nav */}
         <div style={{ display: "none" }} className="md-nav">
-          <div style={{ display: "flex", alignItems: "center", gap: "1.75rem" }}>
-            {navLinks.map(({ label, to }) => (
-              <Link key={to} to={to} className="nav-link" style={{ textDecoration: "none", color: location.pathname === to ? "var(--text-primary)" : undefined }}>
-                {label}
-              </Link>
-            ))}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+            {navLinks.map(({ label, to }) => {
+              const active = location.pathname === to;
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  style={{
+                    textDecoration: "none",
+                    padding: "0.4rem 0.875rem",
+                    borderRadius: "8px",
+                    fontSize: "0.8125rem",
+                    fontWeight: active ? 600 : 500,
+                    color: active ? "var(--text-primary)" : "var(--text-secondary)",
+                    background: active ? "rgba(255,255,255,0.06)" : "transparent",
+                    transition: "all 0.14s ease",
+                  }}
+                  onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; } }}
+                  onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "transparent"; } }}
+                >
+                  {label}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
-        {/* Auth */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        {/* Auth + Mobile Hamburger */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
           {user ? (
             <Link to="/auth" style={{ textDecoration: "none" }}>
-              <img src={avatar} alt="Profile" style={{ width: 30, height: 30, borderRadius: "50%", border: "1px solid var(--border-strong)" }} />
+              <img
+                src={avatar}
+                alt="Profile"
+                style={{ width: 32, height: 32, borderRadius: "50%", border: "2px solid rgba(99,102,241,0.4)" }}
+              />
             </Link>
           ) : (
-            <Link to="/auth" className="btn-primary" style={{ textDecoration: "none" }}>
+            <Link to="/auth" className="btn-primary" style={{ textDecoration: "none", padding: "0.4375rem 1rem", fontSize: "0.8125rem" }}>
               Sign In
             </Link>
           )}
@@ -76,10 +108,8 @@ function Navbar() {
         <div style={{
           background: "var(--bg-card)",
           borderBottom: "1px solid var(--border)",
-          padding: "1rem 1.5rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.25rem",
+          padding: "0.75rem 1rem",
+          display: "flex", flexDirection: "column", gap: "0.125rem",
         }}>
           {navLinks.map(({ label, to }) => (
             <Link
@@ -91,8 +121,9 @@ function Navbar() {
                 padding: "0.5rem 0.75rem",
                 borderRadius: "8px",
                 fontSize: "0.875rem",
+                fontWeight: location.pathname === to ? 600 : 500,
                 color: location.pathname === to ? "var(--text-primary)" : "var(--text-secondary)",
-                background: location.pathname === to ? "rgba(255,255,255,0.06)" : "transparent",
+                background: location.pathname === to ? "rgba(99,102,241,0.1)" : "transparent",
               }}
             >
               {label}
@@ -101,7 +132,6 @@ function Navbar() {
         </div>
       )}
 
-      {/* Responsive styles injected inline via a hidden style tag — Tailwind md: works via CDN but we use inline for clarity */}
       <style>{`
         @media (min-width: 768px) {
           .md-nav { display: flex !important; }
