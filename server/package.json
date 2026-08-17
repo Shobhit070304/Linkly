@@ -4,7 +4,9 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "redis:clean": "node clean-redis.js",
+    "redis:flush": "node clean-redis.js --all"
   },
   "keywords": [],
   "author": "",

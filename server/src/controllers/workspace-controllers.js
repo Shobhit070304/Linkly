@@ -1,6 +1,8 @@
 const crypto = require("crypto");
 const Workspace = require("../models/workspace-model");
 const User = require("../models/user-model");
+const Url = require("../models/url-model");
+const { getRedisClient } = require("../utils/redis-connection");
 
 // Helper — generate a SHA-256 hash of the API key
 const hashKey = (key) => crypto.createHash("sha256").update(key).digest("hex");
@@ -80,7 +82,23 @@ module.exports.deleteWorkspace = async (req, res) => {
       return res.status(404).json({ status: false, error: "Workspace not found or not authorized" });
     }
 
-    // onDelete: 'CASCADE' on Workspace.hasMany(Url) handles link deletion automatically
+    // 1. Find all shortUrls belonging to this workspace
+    const urls = await Url.findAll({
+      where: { workspaceId: id },
+      attributes: ["shortUrl"],
+    });
+    // 2. Invalidate all Redis cache keys for these URLs
+    if (urls.length > 0) {
+      const redisClient = getRedisClient();
+      const shortCodes = urls.map((u) => u.shortUrl);
+
+      await redisClient.hdel("urls", ...shortCodes);
+      await redisClient.hdel("url_metadata", ...shortCodes);
+      const clickKeys = shortCodes.map((code) => `clicks:${code}`);
+      await redisClient.del(...clickKeys);
+    }
+
+    // 3. Delete the workspace from DB (cascades to urls & clicks)
     await workspace.destroy();
 
     return res.status(200).json({ status: true, message: "Workspace deleted successfully" });
