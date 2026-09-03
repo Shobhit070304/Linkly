@@ -1,6 +1,8 @@
 import { lazy, Suspense } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import DashboardLayout from "./components/Layout/DashboardLayout";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
+
 
 // Lazy load components
 const Home = lazy(() => import("./pages/Home"));
@@ -34,37 +36,49 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <DashboardLayout>
-              <Dashboard />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/links"
-          element={<Navigate to="/dashboard" replace />}
+          element={
+            <ProtectedRoute>
+              <Navigate to="/dashboard" replace />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/analytics/:shortCode"
           element={
-            <DashboardLayout>
-              <Analytics />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Analytics />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/analytics"
           element={
-            <DashboardLayout>
-              <Analytics />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Analytics />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/workspaces"
           element={
-            <DashboardLayout>
-              <Workspaces />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Workspaces />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
         

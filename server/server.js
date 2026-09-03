@@ -8,9 +8,16 @@ const server = http.createServer(app);
 
 // Simple error handling
 process.on('uncaughtException', (error) => {
-    console.error('Error:', error);
+    console.error('[UncaughtException] Server will exit:', error);
     process.exit(1);
 });
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[UnhandledRejection] at:', promise, 'reason:', reason);
+    // Do NOT exit here — log it and let the process continue
+    // The specific request/job that failed is already broken, but the server stays up
+});
+
 
 // Connect to Redis and start server
 connectToRedis()
