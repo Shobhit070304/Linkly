@@ -44,10 +44,6 @@ const Url = sequelize.define("Url", {
     type: DataTypes.DATE,
     allowNull: true,
   },
-  qrCode: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
   title: {
     type: DataTypes.STRING,
     allowNull: true,

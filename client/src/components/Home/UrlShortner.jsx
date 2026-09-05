@@ -1,5 +1,6 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import axios from "axios";
+import QRCode from "qrcode";
 import { AuthContext } from "../../context/UserContext";
 import { toast } from "react-toastify";
 import {
@@ -18,13 +19,19 @@ function UrlShortner() {
   const [retrivedLongUrl, setRetrivedLongUrl] = useState("");
   const [loadingShortUrl, setLoadingShortUrl] = useState(false);
   const [loadingLongUrl, setLoadingLongUrl] = useState(false);
+  const qrCanvasRef = useRef(null);
+
+  // Render QR code onto canvas whenever a short URL is generated
+  useEffect(() => {
+    if (!generatedShortUrl || !qrCanvasRef.current) return;
+    QRCode.toCanvas(qrCanvasRef.current, generatedShortUrl, { width: 96, margin: 1 });
+  }, [generatedShortUrl]);
 
   // Advanced options state
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [customShort, setCustomShort] = useState("");
   const [maxClicks, setMaxClicks] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
-  const [qrCode, setQrCode] = useState("");
   const [oneTime, setOneTime] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("");
   const [workspaces, setWorkspaces] = useState([]);
@@ -93,7 +100,6 @@ function UrlShortner() {
       if (response.data && response.data.status) {
         toast.success("Short URL generated successfully");
         setGeneratedShortUrl(response.data.shortUrl);
-        setQrCode(response.data.qrCode);
       } else {
         toast.error(response.data.message || "Failed to shorten URL");
       }
@@ -141,9 +147,10 @@ function UrlShortner() {
     }
   };
 
-  const downloadQR = () => {
+  const downloadQR = async () => {
+    const dataUrl = await QRCode.toDataURL(generatedShortUrl);
     const a = document.createElement("a");
-    a.href = qrCode;
+    a.href = dataUrl;
     a.download = "linkly-qr.png";
     a.click();
   };
@@ -368,9 +375,9 @@ function UrlShortner() {
                   </button>
                 </div>
                 
-                {qrCode && (
-                  <div style={{ marginTop: "1rem", borderTop: "1px solid var(--border)", paddingTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", justifyCenter: "center", gap: "0.5rem" }}>
-                    <img src={qrCode} alt="QR Code" style={{ width: 96, height: 96, background: "#ffffff", padding: 4, borderRadius: 8, border: "1px solid var(--border)" }} />
+                {generatedShortUrl && (
+                  <div style={{ marginTop: "1rem", borderTop: "1px solid var(--border)", paddingTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                    <canvas ref={qrCanvasRef} style={{ borderRadius: 8, border: "1px solid var(--border)", background: "#ffffff", padding: 4 }} />
                     <button onClick={downloadQR} className="btn-ghost" style={{ fontSize: "0.75rem", padding: "0.3rem 0.75rem" }}>
                       Download QR Code
                     </button>

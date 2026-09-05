@@ -5,7 +5,7 @@ const crypto = require("crypto");
 const encodeBase62 = require("../utils/helper");
 const Url = require("../models/url-model");
 const User = require("../models/user-model");
-const QRCode = require("qrcode");
+
 // open-graph-scraper v6+ is ESM-only; loaded via dynamic import() inside shortenUrl
 const Workspace = require('../models/workspace-model');
 
@@ -82,10 +82,6 @@ module.exports.shortenUrl = async (req, res) => {
     }
 
 
-    // Generate QR
-    const fullShortUrl = `${process.env.BACKEND_URL}${shortUrl}`;
-    const qrCode = await QRCode.toDataURL(fullShortUrl);
-
     // Determine workspaceId — from API key auth takes priority, then from UI form input
     let resolvedWorkspaceId = null;
     if (req.workspace) {
@@ -111,7 +107,6 @@ module.exports.shortenUrl = async (req, res) => {
       userId: user.id,
       workspaceId: resolvedWorkspaceId,
       clicks: 0,
-      qrCode,
       maxClicks: maxClicks || null,
       expiresAt: expiresAt || null,
       monitorHealth: monitorHealth === true,
@@ -135,7 +130,6 @@ module.exports.shortenUrl = async (req, res) => {
     return res.status(201).json({
       status: true,
       shortUrl: process.env.BACKEND_URL + shortUrl,
-      qrCode,
     });
   } catch (error) {
     if (error.message === "Redis client not initialized") {
@@ -261,7 +255,7 @@ module.exports.getMyUrls = async (req, res) => {
       limit,
       offset,
       order: [["createdAt", "DESC"]],
-      attributes: { exclude: ["password", "qrCode"] }
+      attributes: { exclude: ["password"] }
     });
 
     const totalClicksResult = await Url.sum('clicks', { where: { userId: user.id } });

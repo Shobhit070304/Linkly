@@ -9,7 +9,11 @@
     "redis:clean": "node clean-redis.js",
     "redis:flush": "node clean-redis.js --all"
   },
-  "keywords": ["url-shortener", "link-management", "analytics"],
+  "keywords": [
+    "url-shortener",
+    "link-management",
+    "analytics"
+  ],
   "author": "Shobhit Sharma",
   "license": "ISC",
   "description": "Backend API for Linkly — a smart URL shortener with analytics, health monitoring, and workspace support",
@@ -28,7 +32,6 @@
     "morgan": "^1.10.1",
     "open-graph-scraper": "^6.10.0",
     "pg": "^8.21.0",
-    "qrcode": "^1.5.4",
     "resend": "^6.18.1",
     "sequelize": "^6.37.8",
     "ua-parser-js": "^2.0.10"
