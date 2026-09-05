@@ -67,7 +67,11 @@ module.exports.shortenUrl = async (req, res) => {
     try {
       const { default: ogs } = await import("open-graph-scraper");
       const { result } = await ogs({ url: longUrl });
-      const faviconUrl = new URL(longUrl).origin + "/favicon.ico";
+      // Prefer the favicon scraped by OGS; fall back to /favicon.ico as last resort
+      const ogFavicon = result.favicon
+        ? (result.favicon.startsWith("http") ? result.favicon : new URL(longUrl).origin + result.favicon)
+        : null;
+      const faviconUrl = ogFavicon || new URL(longUrl).origin + "/favicon.ico";
       meta = {
         title: result.ogTitle || result.twitterTitle || longUrl,
         description: result.ogDescription || "",
@@ -76,6 +80,7 @@ module.exports.shortenUrl = async (req, res) => {
     } catch (err) {
       meta = { title: longUrl, description: "", favicon: "" };
     }
+
 
     // Generate QR
     const fullShortUrl = `${process.env.BACKEND_URL}${shortUrl}`;

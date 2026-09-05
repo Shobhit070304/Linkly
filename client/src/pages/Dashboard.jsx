@@ -38,7 +38,10 @@ function Dashboard() {
           headers: { Authorization: `Bearer ${token}` },
         });
         setWorkspaces(res.data.workspaces || []);
-      } catch { /* non-critical */ }
+      } catch (err) {
+        // Non-critical — workspace filter just won't show if this fails
+        console.warn("Could not load workspaces:", err?.response?.data?.error || err.message);
+      }
     };
     fetchWorkspaces();
   }, [user]);

@@ -49,7 +49,7 @@ if (!rootElement) throw new Error("Failed to find the root element");
 
 const root = createRoot(rootElement);
 root.render(
-  process.env.NODE_ENV === "development" ? (
+  import.meta.env.MODE === "development" ? (
     <StrictMode>
       <BrowserRouter>
         <ErrorBoundary>

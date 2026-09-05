@@ -1,5 +1,7 @@
 {
-  "name": "client",
+  "name": "linkly-client",
+  "description": "Frontend for Linkly — a smart URL shortener with analytics, health monitoring, and workspace support",
+  "author": "Shobhit Sharma",
   "private": true,
   "version": "0.0.0",
   "type": "module",
