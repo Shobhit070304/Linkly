@@ -1,12 +1,7 @@
 const { Worker } = require("bullmq");
-const IORedis = require("ioredis");
 const { logClick } = require("../utils/analytics");
+const connection = require("../utils/bullmq-connection");
 
-const connection = new IORedis(process.env.REDIS_URL, {
-    maxRetriesPerRequest: null,
-});
-
-// Create the worker
 const analyticsWorker = new Worker(
     "analytics",
     async (job) => {

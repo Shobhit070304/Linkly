@@ -3,10 +3,7 @@ const IORedis = require("ioredis");
 const axios = require("axios");
 const { Op } = require("sequelize");
 const Url = require("../models/url-model");
-
-const connection = new IORedis(process.env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-});
+const connection = require("../utils/bullmq-connection");
 
 // How many consecutive failures before marking a link as "broken"
 const FAILURE_THRESHOLD = 3;

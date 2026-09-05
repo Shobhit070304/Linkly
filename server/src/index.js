@@ -169,17 +169,22 @@ app.get("/:shortUrl", async (req, res) => {
       await redisClient.set(`clicks:${shortUrl}`, dbClicks);
       cachedClicks = dbClicks;
     }
-    
-    // Increment the click counter in Redis
-    const clicks = await redisClient.incr(`clicks:${shortUrl}`);
 
-    // 3. Evaluate limits and expiration policies
+    // 3. Evaluate limits and expiration policies BEFORE incrementing
     const now = new Date();
     let isExpired = urlData.expiresAt && now > new Date(urlData.expiresAt);
+    // For date expiry — check before even touching the counter
+    if (isExpired) {
+      await redisClient.hdel("url_metadata", shortUrl);
+      await redisClient.hdel("urls", shortUrl);
+      await redisClient.del(`clicks:${shortUrl}`);
+      return res.redirect(`${process.env.FRONTEND_URL}/preview/${urlData.shortUrl}`);
+    }
+    // Now increment — we know the link is alive by date
+    const clicks = await redisClient.incr(`clicks:${shortUrl}`);
+    // Check click limit AFTER incrementing (we need the new count to compare)
     let isClickLimitReached = urlData.maxClicks && clicks > urlData.maxClicks;
-
-    // If expired or click limit reached, purge cache and redirect to preview/error
-    if (isExpired || isClickLimitReached) {
+    if (isClickLimitReached) {
       await redisClient.hdel("url_metadata", shortUrl);
       await redisClient.hdel("urls", shortUrl);
       await redisClient.del(`clicks:${shortUrl}`);

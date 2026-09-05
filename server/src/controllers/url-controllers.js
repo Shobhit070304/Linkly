@@ -118,7 +118,7 @@ module.exports.shortenUrl = async (req, res) => {
     await redisClient.hset("urls", {
       [shortUrl]: longUrl, // Store the actual long URL for redirect
     });
-    
+
     // Cache URL metadata details for the redirect path
     await redisClient.hset("url_metadata", {
       [shortUrl]: JSON.stringify(newUrl.toJSON()),
@@ -245,7 +245,7 @@ module.exports.getMyUrls = async (req, res) => {
 
     const count = await Url.count({ where: whereClause });
     const totalPages = Math.ceil(count / limit) || 1;
-    
+
     if (page > totalPages) {
       page = totalPages;
     }
@@ -256,13 +256,14 @@ module.exports.getMyUrls = async (req, res) => {
       limit,
       offset,
       order: [["createdAt", "DESC"]],
+      attributes: { exclude: ["password", "qrCode"] }
     });
 
     const totalClicksResult = await Url.sum('clicks', { where: { userId: user.id } });
     const totalClicks = totalClicksResult || 0;
 
-    return res.status(200).json({ 
-      status: true, 
+    return res.status(200).json({
+      status: true,
       urls,
       totalLinks: count,
       totalClicks,

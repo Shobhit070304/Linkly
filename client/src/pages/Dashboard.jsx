@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Plus,
 } from "lucide-react";
+import QRCode from "qrcode";
 
 function Dashboard() {
   const [urls, setUrls] = useState([]);
@@ -235,14 +236,14 @@ function Dashboard() {
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.5rem" }}>
                       {!isExpiredSection && (
                         <button
-                          onClick={() => {
+                          onClick={async () => {
+                            const shortLink = `${import.meta.env.VITE_BACKEND_URL}/${url.shortUrl}`;
+                            const dataUrl = await QRCode.toDataURL(shortLink);
                             const a = document.createElement("a");
-                            a.href = url.qrCode;
+                            a.href = dataUrl;
                             a.download = `${url.shortUrl}-qr.png`;
                             a.click();
                           }}
-                          style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 3, display: "flex" }}
-                          title="Download QR"
                         >
                           <QrCode style={{ width: 14, height: 14 }} />
                         </button>
